@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Venus Match — find out where your Venus really stands</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap');
+
+:root{
+  --bg-deep:#080a1c;
+  --bg-card:#141833;
+  --bg-card-2:#1c2144;
+  --text-main:#f0eef7;
+  --text-dim:#a6a8c4;
+  --gold:#e8b860;
+  --rose:#d68fa3;
+  --line:rgba(232,184,96,0.18);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{
+  background:var(--bg-deep);
+  color:var(--text-main);
+  font-family:'Inter',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+#stars{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.star{position:absolute;background:#fff;border-radius:50%;animation:twinkle ease-in-out infinite;}
+@keyframes twinkle{0%,100%{opacity:0.1;}50%{opacity:1;}}
+
+.comet{
+  position:absolute;
+  width:2px;height:2px;
+  background:#fff;
+  border-radius:50%;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.1);
+  animation:comet-fly linear forwards;
+}
+.comet::before{
+  content:'';
+  position:absolute;
+  top:50%;left:50%;
+  width:140px;height:1.5px;
+  background:linear-gradient(90deg,rgba(255,255,255,0.9),rgba(255,255,255,0) 100%);
+  transform:translate(-100%,-50%) rotate(180deg);
+  transform-origin:right center;
+}
+@keyframes comet-fly{
+  0%{transform:translate(0,0);opacity:0;}
+  6%{opacity:1;}
+  85%{opacity:1;}
+  100%{transform:translate(var(--dx),var(--dy));opacity:0;}
+}
+
+.wrap{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:40px 24px 60px;min-height:100vh;display:flex;flex-direction:column;}
+
+h1{
+  font-family:'Cormorant Garamond',serif;
+  font-weight:600;
+  font-size:clamp(26px,3.4vw,38px);
+  text-align:center;
+  letter-spacing:0.01em;
+  background:linear-gradient(180deg,#fff,var(--gold));
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.subtitle{
+  text-align:center;
+  color:var(--text-dim);
+  font-size:13.5px;
+  max-width:520px;
+  margin:8px auto 0;
+  line-height:1.5;
+}
+.privacy-note{
+  text-align:center;
+  color:var(--text-dim);
+  font-size:11px;
+  margin-top:6px;
+  opacity:0.65;
+}
+
+.stage{
+  position:relative;
+  margin-top:auto;
+  margin-bottom:auto;
+  flex:1;
+  display:flex;
+  align-items:center;
+}
+
+.people{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  gap:28px;
+  align-items:center;
+  width:100%;
+}
+@media(max-width:860px){
+  .people{grid-template-columns:1fr;}
+  .orbit-zone{order:3;padding:20px 0;}
+}
+
+.person-card{
+  background:var(--bg-card);
+  border:0.5px solid var(--line);
+  border-radius:16px;
+  padding:22px 22px;
+}
+.person-card h2{
+  font-family:'Cormorant Garamond',serif;
+  font-weight:500;
+  font-style:italic;
+  font-size:20px;
+  color:var(--rose);
+  margin-bottom:16px;
+}
+.field{margin-bottom:12px;}
+.field label{
+  display:block;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--text-dim);
+  margin-bottom:5px;
+}
+.field input{
+  width:100%;
+  background:var(--bg-card-2);
+  border:0.5px solid var(--line);
+  border-radius:8px;
+  padding:9px 12px;
+  color:var(--text-main);
+  font-family:'Inter',sans-serif;
+  font-size:13.5px;
+}
+.field input:focus{outline:none;border-color:var(--gold);}
+.field input::placeholder{color:#5b5e80;}
+.time-unknown{
+  display:flex;align-items:center;gap:8px;margin-top:5px;
+  font-size:11.5px;color:var(--text-dim);
+}
+.time-unknown input{width:auto;}
+
+.orbit-zone{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:0 12px;
+}
+.orbit-btn{
+  background:rgba(232,184,96,0.06);
+  border:1.5px solid var(--gold);
+  border-radius:100px;
+  cursor:pointer;
+  width:170px;height:100px;
+  position:relative;
+  display:flex;align-items:center;justify-content:center;
+  transition:background 0.2s, box-shadow 0.2s, transform 0.15s;
+  box-shadow:0 0 0 0 rgba(232,184,96,0.0);
+}
+.orbit-btn:hover{
+  background:rgba(232,184,96,0.14);
+  box-shadow:0 0 22px 2px rgba(232,184,96,0.25);
+  transform:translateY(-1px);
+}
+.orbit-btn:active{transform:translateY(0px) scale(0.98);}
+.orbit-btn svg{width:88%;height:88%;overflow:visible;}
+.orbit-btn:hover .venus-glyph{filter:drop-shadow(0 0 6px var(--gold));}
+.orbit-btn:disabled{opacity:0.4;cursor:not-allowed;}
+.orbit-btn:disabled:hover{box-shadow:none;transform:none;background:rgba(232,184,96,0.06);}
+.orbit-label{
+  margin-top:12px;
+  font-size:12px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--gold);
+  font-weight:500;
+}
+.error-msg{
+  color:var(--rose);
+  font-size:13px;
+  margin-top:10px;
+  text-align:center;
+  min-height:18px;
+}
+
+.spin-active .venus-orbit-group{animation:spin-orbit 2.2s cubic-bezier(0.4,0,0.2,1);}
+@keyframes spin-orbit{
+  0%{transform:rotate(0deg);}
+  100%{transform:rotate(1080deg);}
+}
+
+#resultsView{display:none;}
+.results-header{text-align:center;margin-bottom:8px;}
+.results-header .names{
+  font-family:'Cormorant Garamond',serif;
+  font-style:italic;
+  font-size:26px;
+  color:var(--text-main);
+}
+.results-header .names span{color:var(--rose);}
+
+.recap{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+  margin:28px 0 8px;
+}
+@media(max-width:720px){.recap{grid-template-columns:1fr;}}
+.recap-card{
+  background:var(--bg-card);
+  border:0.5px solid var(--line);
+  border-radius:14px;
+  padding:20px 22px;
+}
+.recap-card .who{font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-dim);margin-bottom:4px;}
+.recap-card .venus-sign{
+  font-family:'Cormorant Garamond',serif;
+  font-size:22px;color:var(--gold);margin-bottom:10px;
+}
+.recap-card .meta{font-size:12px;color:var(--text-dim);line-height:1.7;}
+
+.venus-banner{
+  text-align:center;
+  margin:36px 0 28px;
+  font-family:'Cormorant Garamond',serif;
+  font-size:20px;
+  color:var(--text-dim);
+}
+.venus-banner b{color:var(--gold);font-weight:600;}
+
+.section{margin-bottom:26px;}
+.section h3{
+  font-size:12px;text-transform:uppercase;letter-spacing:0.08em;
+  color:var(--rose);margin-bottom:10px;
+}
+.section p{
+  font-size:15.5px;line-height:1.75;color:var(--text-main);
+}
+
+.back-btn{
+  display:block;margin:40px auto 0;
+  background:none;border:0.5px solid var(--line);
+  color:var(--text-dim);border-radius:8px;
+  padding:10px 20px;font-size:13px;cursor:pointer;
+  font-family:'Inter',sans-serif;
+}
+.back-btn:hover{border-color:var(--gold);color:var(--gold);}
+
+.missing-note{
+  text-align:center;color:var(--text-dim);font-size:13px;
+  margin-top:18px;line-height:1.6;
+}
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<div class="wrap">
+  <h1>Venus Match</h1>
+  <p class="subtitle">Everyone talks about sun signs. Nobody talks about Venus — and Venus is the one that actually tells you how two people love.</p>
+  <p class="privacy-note">Nothing you enter is stored or sent anywhere. Everything is calculated right here, in your browser.</p>
+
+  <div id="formView" class="stage">
+    <div class="people">
+      <div class="person-card">
+        <h2 id="p1Label">Person one</h2>
+        <div class="field">
+          <label>Name (first name or nickname is fine)</label>
+          <input type="text" id="p1name" placeholder="Anna" maxlength="40">
+        </div>
+        <div class="field">
+          <label>Date of birth</label>
+          <input type="date" id="p1date" min="1920-01-01" max="2035-12-31">
+        </div>
+        <div class="field">
+          <label>Time of birth</label>
+          <input type="time" id="p1time">
+          <div class="time-unknown">
+            <input type="checkbox" id="p1timeunknown">
+            <label for="p1timeunknown" style="margin:0;text-transform:none;letter-spacing:normal;">I don't know the exact time</label>
+          </div>
+        </div>
+        <div class="field">
+          <label>Place of birth</label>
+          <input type="text" id="p1place" placeholder="Chicago, USA">
+        </div>
+      </div>
+
+      <div class="orbit-zone">
+        <button class="orbit-btn" id="submitBtn" onclick="runMatch()">
+          <svg viewBox="0 0 180 120">
+            <g class="venus-orbit-group" style="transform-origin:90px 60px;">
+              <ellipse cx="90" cy="60" rx="55" ry="18" fill="none" stroke="#e8b86055" stroke-width="1" stroke-dasharray="2 4"/>
+              <g class="venus-glyph" transform="translate(45,60)">
+                <circle cx="0" cy="-6" r="16" fill="none" stroke="#e8b860" stroke-width="2.5"/>
+                <line x1="0" y1="10" x2="0" y2="28" stroke="#e8b860" stroke-width="2.5"/>
+                <line x1="-9" y1="22" x2="9" y2="22" stroke="#e8b860" stroke-width="2.5"/>
+              </g>
+              <g class="venus-glyph" transform="translate(135,60)">
+                <circle cx="0" cy="-6" r="16" fill="none" stroke="#d68fa3" stroke-width="2.5"/>
+                <line x1="0" y1="10" x2="0" y2="28" stroke="#d68fa3" stroke-width="2.5"/>
+                <line x1="-9" y1="22" x2="9" y2="22" stroke="#d68fa3" stroke-width="2.5"/>
+              </g>
+            </g>
+          </svg>
+        </button>
+        <div class="orbit-label">Reveal the match</div>
+        <div class="error-msg" id="errorMsg"></div>
+      </div>
+
+      <div class="person-card">
+        <h2 id="p2Label">Person two</h2>
+        <div class="field">
+          <label>Name (first name or nickname is fine)</label>
+          <input type="text" id="p2name" placeholder="Jess" maxlength="40">
+        </div>
+        <div class="field">
+          <label>Date of birth</label>
+          <input type="date" id="p2date" min="1920-01-01" max="2035-12-31">
+        </div>
+        <div class="field">
+          <label>Time of birth</label>
+          <input type="time" id="p2time">
+          <div class="time-unknown">
+            <input type="checkbox" id="p2timeunknown">
+            <label for="p2timeunknown" style="margin:0;text-transform:none;letter-spacing:normal;">I don't know the exact time</label>
+          </div>
+        </div>
+        <div class="field">
+          <label>Place of birth</label>
+          <input type="text" id="p2place" placeholder="Dnipro, Ukraine">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="resultsView">
+    <div class="results-header">
+      <div class="names" id="resultNames"></div>
+    </div>
+
+    <div class="recap">
+      <div class="recap-card">
+        <div class="who" id="recap1who"></div>
+        <div class="venus-sign" id="recap1venus"></div>
+        <div class="meta" id="recap1meta"></div>
+      </div>
+      <div class="recap-card">
+        <div class="who" id="recap2who"></div>
+        <div class="venus-sign" id="recap2venus"></div>
+        <div class="meta" id="recap2meta"></div>
+      </div>
+    </div>
+
+    <div class="venus-banner" id="venusBanner"></div>
+
+    <div id="compatContent"></div>
+    <div id="missingNote" class="missing-note" style="display:none;"></div>
+
+    <button class="back-btn" onclick="goBack()">Start over</button>
+  </div>
+</div>
+
+<script>
+const VENUS_TRANSITIONS = [{"date":"1920-01-01","sign":"Scorpio"},{"date":"1920-01-04","sign":"Sagittarius"},{"date":"1920-01-29","sign":"Capricorn"},{"date":"1920-02-23","sign":"Aquarius"},{"date":"1920-03-19","sign":"Pisces"},{"date":"1920-04-12","sign":"Aries"},{"date":"1920-05-07","sign":"Taurus"},{"date":"1920-05-31","sign":"Gemini"},{"date":"1920-06-24","sign":"Cancer"},{"date":"1920-07-19","sign":"Leo"},{"date":"1920-08-12","sign":"Virgo"},{"date":"1920-09-05","sign":"Libra"},{"date":"1920-09-30","sign":"Scorpio"},{"date":"1920-10-24","sign":"Sagittarius"},{"date":"1920-11-18","sign":"Capricorn"},{"date":"1920-12-12","sign":"Aquarius"},{"date":"1921-01-07","sign":"Pisces"},{"date":"1921-02-03","sign":"Aries"},{"date":"1921-03-07","sign":"Taurus"},{"date":"1921-04-26","sign":"Aries"},{"date":"1921-06-02","sign":"Taurus"},{"date":"1921-07-08","sign":"Gemini"},{"date":"1921-08-06","sign":"Cancer"},{"date":"1921-09-01","sign":"Leo"},{"date":"1921-09-26","sign":"Virgo"},{"date":"1921-10-21","sign":"Libra"},{"date":"1921-11-14","sign":"Scorpio"},{"date":"1921-12-08","sign":"Sagittarius"},{"date":"1922-01-01","sign":"Capricorn"},{"date":"1922-01-25","sign":"Aquarius"},{"date":"1922-02-17","sign":"Pisces"},{"date":"1922-03-13","sign":"Aries"},{"date":"1922-04-07","sign":"Taurus"},{"date":"1922-05-01","sign":"Gemini"},{"date":"1922-05-26","sign":"Cancer"},{"date":"1922-06-20","sign":"Leo"},{"date":"1922-07-15","sign":"Virgo"},{"date":"1922-08-10","sign":"Libra"},{"date":"1922-09-07","sign":"Scorpio"},{"date":"1922-10-11","sign":"Sagittarius"},{"date":"1922-11-29","sign":"Scorpio"},{"date":"1923-01-02","sign":"Sagittarius"},{"date":"1923-02-07","sign":"Capricorn"},{"date":"1923-03-06","sign":"Aquarius"},{"date":"1923-04-01","sign":"Pisces"},{"date":"1923-04-27","sign":"Aries"},{"date":"1923-05-22","sign":"Taurus"},{"date":"1923-06-15","sign":"Gemini"},{"date":"1923-07-10","sign":"Cancer"},{"date":"1923-08-04","sign":"Leo"},{"date":"1923-08-28","sign":"Virgo"},{"date":"1923-09-21","sign":"Libra"},{"date":"1923-10-15","sign":"Scorpio"},{"date":"1923-11-08","sign":"Sagittarius"},{"date":"1923-12-02","sign":"Capricorn"},{"date":"1923-12-26","sign":"Aquarius"},{"date":"1924-01-20","sign":"Pisces"},{"date":"1924-02-13","sign":"Aries"},{"date":"1924-03-09","sign":"Taurus"},{"date":"1924-04-05","sign":"Gemini"},{"date":"1924-05-06","sign":"Cancer"},{"date":"1924-09-09","sign":"Leo"},{"date":"1924-10-08","sign":"Virgo"},{"date":"1924-11-03","sign":"Libra"},{"date":"1924-11-27","sign":"Scorpio"},{"date":"1924-12-22","sign":"Sagittarius"},{"date":"1925-01-15","sign":"Capricorn"},{"date":"1925-02-08","sign":"Aquarius"},{"date":"1925-03-04","sign":"Pisces"},{"date":"1925-03-28","sign":"Aries"},{"date":"1925-04-21","sign":"Taurus"},{"date":"1925-05-16","sign":"Gemini"},{"date":"1925-06-09","sign":"Cancer"},{"date":"1925-07-04","sign":"Leo"},{"date":"1925-07-28","sign":"Virgo"},{"date":"1925-08-22","sign":"Libra"},{"date":"1925-09-16","sign":"Scorpio"},{"date":"1925-10-12","sign":"Sagittarius"},{"date":"1925-11-07","sign":"Capricorn"},{"date":"1925-12-06","sign":"Aquarius"},{"date":"1926-04-06","sign":"Pisces"},{"date":"1926-05-07","sign":"Aries"},{"date":"1926-06-03","sign":"Taurus"},{"date":"1926-06-29","sign":"Gemini"},{"date":"1926-07-24","sign":"Cancer"},{"date":"1926-08-18","sign":"Leo"},{"date":"1926-09-12","sign":"Virgo"},{"date":"1926-10-06","sign":"Libra"},{"date":"1926-10-30","sign":"Scorpio"},{"date":"1926-11-23","sign":"Sagittarius"},{"date":"1926-12-17","sign":"Capricorn"},{"date":"1927-01-09","sign":"Aquarius"},{"date":"1927-02-02","sign":"Pisces"},{"date":"1927-02-27","sign":"Aries"},{"date":"1927-03-23","sign":"Taurus"},{"date":"1927-04-17","sign":"Gemini"},{"date":"1927-05-12","sign":"Cancer"},{"date":"1927-06-08","sign":"Leo"},{"date":"1927-07-08","sign":"Virgo"},{"date":"1927-11-10","sign":"Libra"},{"date":"1927-12-09","sign":"Scorpio"},{"date":"1928-01-04","sign":"Sagittarius"},{"date":"1928-01-29","sign":"Capricorn"},{"date":"1928-02-23","sign":"Aquarius"},{"date":"1928-03-18","sign":"Pisces"},{"date":"1928-04-12","sign":"Aries"},{"date":"1928-05-06","sign":"Taurus"},{"date":"1928-05-30","sign":"Gemini"},{"date":"1928-06-24","sign":"Cancer"},{"date":"1928-07-18","sign":"Leo"},{"date":"1928-08-12","sign":"Virgo"},{"date":"1928-09-05","sign":"Libra"},{"date":"1928-09-29","sign":"Scorpio"},{"date":"1928-10-24","sign":"Sagittarius"},{"date":"1928-11-17","sign":"Capricorn"},{"date":"1928-12-12","sign":"Aquarius"},{"date":"1929-01-07","sign":"Pisces"},{"date":"1929-02-03","sign":"Aries"},{"date":"1929-03-08","sign":"Taurus"},{"date":"1929-04-20","sign":"Aries"},{"date":"1929-06-03","sign":"Taurus"},{"date":"1929-07-08","sign":"Gemini"},{"date":"1929-08-05","sign":"Cancer"},{"date":"1929-08-31","sign":"Leo"},{"date":"1929-09-26","sign":"Virgo"},{"date":"1929-10-20","sign":"Libra"},{"date":"1929-11-13","sign":"Scorpio"},{"date":"1929-12-07","sign":"Sagittarius"},{"date":"1929-12-31","sign":"Capricorn"},{"date":"1930-01-24","sign":"Aquarius"},{"date":"1930-02-17","sign":"Pisces"},{"date":"1930-03-13","sign":"Aries"},{"date":"1930-04-06","sign":"Taurus"},{"date":"1930-05-01","sign":"Gemini"},{"date":"1930-05-25","sign":"Cancer"},{"date":"1930-06-19","sign":"Leo"},{"date":"1930-07-15","sign":"Virgo"},{"date":"1930-08-10","sign":"Libra"},{"date":"1930-09-07","sign":"Scorpio"},{"date":"1930-10-12","sign":"Sagittarius"},{"date":"1930-11-22","sign":"Scorpio"},{"date":"1931-01-04","sign":"Sagittarius"},{"date":"1931-02-07","sign":"Capricorn"},{"date":"1931-03-06","sign":"Aquarius"},{"date":"1931-04-01","sign":"Pisces"},{"date":"1931-04-26","sign":"Aries"},{"date":"1931-05-21","sign":"Taurus"},{"date":"1931-06-15","sign":"Gemini"},{"date":"1931-07-10","sign":"Cancer"},{"date":"1931-08-03","sign":"Leo"},{"date":"1931-08-27","sign":"Virgo"},{"date":"1931-09-21","sign":"Libra"},{"date":"1931-10-15","sign":"Scorpio"},{"date":"1931-11-08","sign":"Sagittarius"},{"date":"1931-12-02","sign":"Capricorn"},{"date":"1931-12-26","sign":"Aquarius"},{"date":"1932-01-19","sign":"Pisces"},{"date":"1932-02-13","sign":"Aries"},{"date":"1932-03-09","sign":"Taurus"},{"date":"1932-04-05","sign":"Gemini"},{"date":"1932-05-06","sign":"Cancer"},{"date":"1932-07-13","sign":"Gemini"},{"date":"1932-07-29","sign":"Cancer"},{"date":"1932-09-09","sign":"Leo"},{"date":"1932-10-07","sign":"Virgo"},{"date":"1932-11-02","sign":"Libra"},{"date":"1932-11-27","sign":"Scorpio"},{"date":"1932-12-21","sign":"Sagittarius"},{"date":"1933-01-14","sign":"Capricorn"},{"date":"1933-02-07","sign":"Aquarius"},{"date":"1933-03-03","sign":"Pisces"},{"date":"1933-03-28","sign":"Aries"},{"date":"1933-04-21","sign":"Taurus"},{"date":"1933-05-15","sign":"Gemini"},{"date":"1933-06-09","sign":"Cancer"},{"date":"1933-07-03","sign":"Leo"},{"date":"1933-07-28","sign":"Virgo"},{"date":"1933-08-22","sign":"Libra"},{"date":"1933-09-16","sign":"Scorpio"},{"date":"1933-10-11","sign":"Sagittarius"},{"date":"1933-11-07","sign":"Capricorn"},{"date":"1933-12-06","sign":"Aquarius"},{"date":"1934-04-06","sign":"Pisces"},{"date":"1934-05-06","sign":"Aries"},{"date":"1934-06-02","sign":"Taurus"},{"date":"1934-06-28","sign":"Gemini"},{"date":"1934-07-24","sign":"Cancer"},{"date":"1934-08-18","sign":"Leo"},{"date":"1934-09-11","sign":"Virgo"},{"date":"1934-10-05","sign":"Libra"},{"date":"1934-10-29","sign":"Scorpio"},{"date":"1934-11-22","sign":"Sagittarius"},{"date":"1934-12-16","sign":"Capricorn"},{"date":"1935-01-09","sign":"Aquarius"},{"date":"1935-02-02","sign":"Pisces"},{"date":"1935-02-26","sign":"Aries"},{"date":"1935-03-22","sign":"Taurus"},{"date":"1935-04-16","sign":"Gemini"},{"date":"1935-05-12","sign":"Cancer"},{"date":"1935-06-08","sign":"Leo"},{"date":"1935-07-08","sign":"Virgo"},{"date":"1935-11-10","sign":"Libra"},{"date":"1935-12-09","sign":"Scorpio"},{"date":"1936-01-04","sign":"Sagittarius"},{"date":"1936-01-29","sign":"Capricorn"},{"date":"1936-02-22","sign":"Aquarius"},{"date":"1936-03-18","sign":"Pisces"},{"date":"1936-04-11","sign":"Aries"},{"date":"1936-05-05","sign":"Taurus"},{"date":"1936-05-30","sign":"Gemini"},{"date":"1936-06-23","sign":"Cancer"},{"date":"1936-07-18","sign":"Leo"},{"date":"1936-08-11","sign":"Virgo"},{"date":"1936-09-04","sign":"Libra"},{"date":"1936-09-29","sign":"Scorpio"},{"date":"1936-10-23","sign":"Sagittarius"},{"date":"1936-11-17","sign":"Capricorn"},{"date":"1936-12-12","sign":"Aquarius"},{"date":"1937-01-06","sign":"Pisces"},{"date":"1937-02-02","sign":"Aries"},{"date":"1937-03-10","sign":"Taurus"},{"date":"1937-04-14","sign":"Aries"},{"date":"1937-06-04","sign":"Taurus"},{"date":"1937-07-08","sign":"Gemini"},{"date":"1937-08-05","sign":"Cancer"},{"date":"1937-08-31","sign":"Leo"},{"date":"1937-09-25","sign":"Virgo"},{"date":"1937-10-20","sign":"Libra"},{"date":"1937-11-13","sign":"Scorpio"},{"date":"1937-12-07","sign":"Sagittarius"},{"date":"1937-12-31","sign":"Capricorn"},{"date":"1938-01-23","sign":"Aquarius"},{"date":"1938-02-16","sign":"Pisces"},{"date":"1938-03-12","sign":"Aries"},{"date":"1938-04-06","sign":"Taurus"},{"date":"1938-04-30","sign":"Gemini"},{"date":"1938-05-25","sign":"Cancer"},{"date":"1938-06-19","sign":"Leo"},{"date":"1938-07-14","sign":"Virgo"},{"date":"1938-08-10","sign":"Libra"},{"date":"1938-09-07","sign":"Scorpio"},{"date":"1938-10-14","sign":"Sagittarius"},{"date":"1938-11-16","sign":"Scorpio"},{"date":"1939-01-05","sign":"Sagittarius"},{"date":"1939-02-06","sign":"Capricorn"},{"date":"1939-03-06","sign":"Aquarius"},{"date":"1939-03-31","sign":"Pisces"},{"date":"1939-04-26","sign":"Aries"},{"date":"1939-05-21","sign":"Taurus"},{"date":"1939-06-14","sign":"Gemini"},{"date":"1939-07-09","sign":"Cancer"},{"date":"1939-08-03","sign":"Leo"},{"date":"1939-08-27","sign":"Virgo"},{"date":"1939-09-20","sign":"Libra"},{"date":"1939-10-14","sign":"Scorpio"},{"date":"1939-11-07","sign":"Sagittarius"},{"date":"1939-12-01","sign":"Capricorn"},{"date":"1939-12-25","sign":"Aquarius"},{"date":"1940-01-19","sign":"Pisces"},{"date":"1940-02-12","sign":"Aries"},{"date":"1940-03-09","sign":"Taurus"},{"date":"1940-04-05","sign":"Gemini"},{"date":"1940-05-07","sign":"Cancer"},{"date":"1940-07-06","sign":"Gemini"},{"date":"1940-08-01","sign":"Cancer"},{"date":"1940-09-09","sign":"Leo"},{"date":"1940-10-07","sign":"Virgo"},{"date":"1940-11-02","sign":"Libra"},{"date":"1940-11-27","sign":"Scorpio"},{"date":"1940-12-21","sign":"Sagittarius"},{"date":"1941-01-14","sign":"Capricorn"},{"date":"1941-02-07","sign":"Aquarius"},{"date":"1941-03-03","sign":"Pisces"},{"date":"1941-03-27","sign":"Aries"},{"date":"1941-04-20","sign":"Taurus"},{"date":"1941-05-15","sign":"Gemini"},{"date":"1941-06-08","sign":"Cancer"},{"date":"1941-07-03","sign":"Leo"},{"date":"1941-07-27","sign":"Virgo"},{"date":"1941-08-21","sign":"Libra"},{"date":"1941-09-15","sign":"Scorpio"},{"date":"1941-10-11","sign":"Sagittarius"},{"date":"1941-11-06","sign":"Capricorn"},{"date":"1941-12-06","sign":"Aquarius"},{"date":"1942-04-07","sign":"Pisces"},{"date":"1942-05-06","sign":"Aries"},{"date":"1942-06-02","sign":"Taurus"},{"date":"1942-06-28","sign":"Gemini"},{"date":"1942-07-23","sign":"Cancer"},{"date":"1942-08-17","sign":"Leo"},{"date":"1942-09-11","sign":"Virgo"},{"date":"1942-10-05","sign":"Libra"},{"date":"1942-10-29","sign":"Scorpio"},{"date":"1942-11-22","sign":"Sagittarius"},{"date":"1942-12-16","sign":"Capricorn"},{"date":"1943-01-08","sign":"Aquarius"},{"date":"1943-02-01","sign":"Pisces"},{"date":"1943-02-26","sign":"Aries"},{"date":"1943-03-22","sign":"Taurus"},{"date":"1943-04-16","sign":"Gemini"},{"date":"1943-05-11","sign":"Cancer"},{"date":"1943-06-08","sign":"Leo"},{"date":"1943-07-08","sign":"Virgo"},{"date":"1943-11-10","sign":"Libra"},{"date":"1943-12-08","sign":"Scorpio"},{"date":"1944-01-03","sign":"Sagittarius"},{"date":"1944-01-28","sign":"Capricorn"},{"date":"1944-02-22","sign":"Aquarius"},{"date":"1944-03-17","sign":"Pisces"},{"date":"1944-04-11","sign":"Aries"},{"date":"1944-05-05","sign":"Taurus"},{"date":"1944-05-29","sign":"Gemini"},{"date":"1944-06-23","sign":"Cancer"},{"date":"1944-07-17","sign":"Leo"},{"date":"1944-08-11","sign":"Virgo"},{"date":"1944-09-04","sign":"Libra"},{"date":"1944-09-28","sign":"Scorpio"},{"date":"1944-10-23","sign":"Sagittarius"},{"date":"1944-11-16","sign":"Capricorn"},{"date":"1944-12-11","sign":"Aquarius"},{"date":"1945-01-06","sign":"Pisces"},{"date":"1945-02-02","sign":"Aries"},{"date":"1945-03-11","sign":"Taurus"},{"date":"1945-04-08","sign":"Aries"},{"date":"1945-06-05","sign":"Taurus"},{"date":"1945-07-08","sign":"Gemini"},{"date":"1945-08-04","sign":"Cancer"},{"date":"1945-08-31","sign":"Leo"},{"date":"1945-09-25","sign":"Virgo"},{"date":"1945-10-19","sign":"Libra"},{"date":"1945-11-12","sign":"Scorpio"},{"date":"1945-12-06","sign":"Sagittarius"},{"date":"1945-12-30","sign":"Capricorn"},{"date":"1946-01-23","sign":"Aquarius"},{"date":"1946-02-16","sign":"Pisces"},{"date":"1946-03-12","sign":"Aries"},{"date":"1946-04-05","sign":"Taurus"},{"date":"1946-04-29","sign":"Gemini"},{"date":"1946-05-24","sign":"Cancer"},{"date":"1946-06-18","sign":"Leo"},{"date":"1946-07-14","sign":"Virgo"},{"date":"1946-08-09","sign":"Libra"},{"date":"1946-09-07","sign":"Scorpio"},{"date":"1946-10-16","sign":"Sagittarius"},{"date":"1946-11-08","sign":"Scorpio"},{"date":"1947-01-06","sign":"Sagittarius"},{"date":"1947-02-06","sign":"Capricorn"},{"date":"1947-03-05","sign":"Aquarius"},{"date":"1947-03-31","sign":"Pisces"},{"date":"1947-04-25","sign":"Aries"},{"date":"1947-05-20","sign":"Taurus"},{"date":"1947-06-14","sign":"Gemini"},{"date":"1947-07-09","sign":"Cancer"},{"date":"1947-08-02","sign":"Leo"},{"date":"1947-08-26","sign":"Virgo"},{"date":"1947-09-20","sign":"Libra"},{"date":"1947-10-14","sign":"Scorpio"},{"date":"1947-11-07","sign":"Sagittarius"},{"date":"1947-12-01","sign":"Capricorn"},{"date":"1947-12-25","sign":"Aquarius"},{"date":"1948-01-18","sign":"Pisces"},{"date":"1948-02-12","sign":"Aries"},{"date":"1948-03-08","sign":"Taurus"},{"date":"1948-04-05","sign":"Gemini"},{"date":"1948-05-07","sign":"Cancer"},{"date":"1948-06-29","sign":"Gemini"},{"date":"1948-08-03","sign":"Cancer"},{"date":"1948-09-09","sign":"Leo"},{"date":"1948-10-07","sign":"Virgo"},{"date":"1948-11-01","sign":"Libra"},{"date":"1948-11-26","sign":"Scorpio"},{"date":"1948-12-20","sign":"Sagittarius"},{"date":"1949-01-13","sign":"Capricorn"},{"date":"1949-02-06","sign":"Aquarius"},{"date":"1949-03-02","sign":"Pisces"},{"date":"1949-03-26","sign":"Aries"},{"date":"1949-04-20","sign":"Taurus"},{"date":"1949-05-14","sign":"Gemini"},{"date":"1949-06-07","sign":"Cancer"},{"date":"1949-07-02","sign":"Leo"},{"date":"1949-07-27","sign":"Virgo"},{"date":"1949-08-21","sign":"Libra"},{"date":"1949-09-15","sign":"Scorpio"},{"date":"1949-10-10","sign":"Sagittarius"},{"date":"1949-11-06","sign":"Capricorn"},{"date":"1949-12-06","sign":"Aquarius"},{"date":"1950-04-07","sign":"Pisces"},{"date":"1950-05-06","sign":"Aries"},{"date":"1950-06-02","sign":"Taurus"},{"date":"1950-06-27","sign":"Gemini"},{"date":"1950-07-23","sign":"Cancer"},{"date":"1950-08-17","sign":"Leo"},{"date":"1950-09-10","sign":"Virgo"},{"date":"1950-10-04","sign":"Libra"},{"date":"1950-10-28","sign":"Scorpio"},{"date":"1950-11-21","sign":"Sagittarius"},{"date":"1950-12-15","sign":"Capricorn"},{"date":"1951-01-08","sign":"Aquarius"},{"date":"1951-02-01","sign":"Pisces"},{"date":"1951-02-25","sign":"Aries"},{"date":"1951-03-21","sign":"Taurus"},{"date":"1951-04-15","sign":"Gemini"},{"date":"1951-05-11","sign":"Cancer"},{"date":"1951-06-07","sign":"Leo"},{"date":"1951-07-08","sign":"Virgo"},{"date":"1951-11-10","sign":"Libra"},{"date":"1951-12-08","sign":"Scorpio"},{"date":"1952-01-03","sign":"Sagittarius"},{"date":"1952-01-28","sign":"Capricorn"},{"date":"1952-02-21","sign":"Aquarius"},{"date":"1952-03-17","sign":"Pisces"},{"date":"1952-04-10","sign":"Aries"},{"date":"1952-05-04","sign":"Taurus"},{"date":"1952-05-29","sign":"Gemini"},{"date":"1952-06-22","sign":"Cancer"},{"date":"1952-07-17","sign":"Leo"},{"date":"1952-08-10","sign":"Virgo"},{"date":"1952-09-03","sign":"Libra"},{"date":"1952-09-28","sign":"Scorpio"},{"date":"1952-10-22","sign":"Sagittarius"},{"date":"1952-11-16","sign":"Capricorn"},{"date":"1952-12-11","sign":"Aquarius"},{"date":"1953-01-05","sign":"Pisces"},{"date":"1953-02-02","sign":"Aries"},{"date":"1953-03-15","sign":"Taurus"},{"date":"1953-03-31","sign":"Aries"},{"date":"1953-06-05","sign":"Taurus"},{"date":"1953-07-07","sign":"Gemini"},{"date":"1953-08-04","sign":"Cancer"},{"date":"1953-08-30","sign":"Leo"},{"date":"1953-09-24","sign":"Virgo"},{"date":"1953-10-19","sign":"Libra"},{"date":"1953-11-12","sign":"Scorpio"},{"date":"1953-12-06","sign":"Sagittarius"},{"date":"1953-12-30","sign":"Capricorn"},{"date":"1954-01-22","sign":"Aquarius"},{"date":"1954-02-15","sign":"Pisces"},{"date":"1954-03-11","sign":"Aries"},{"date":"1954-04-04","sign":"Taurus"},{"date":"1954-04-29","sign":"Gemini"},{"date":"1954-05-24","sign":"Cancer"},{"date":"1954-06-18","sign":"Leo"},{"date":"1954-07-13","sign":"Virgo"},{"date":"1954-08-09","sign":"Libra"},{"date":"1954-09-07","sign":"Scorpio"},{"date":"1954-10-24","sign":"Sagittarius"},{"date":"1954-10-27","sign":"Scorpio"},{"date":"1955-01-06","sign":"Sagittarius"},{"date":"1955-02-06","sign":"Capricorn"},{"date":"1955-03-05","sign":"Aquarius"},{"date":"1955-03-30","sign":"Pisces"},{"date":"1955-04-25","sign":"Aries"},{"date":"1955-05-20","sign":"Taurus"},{"date":"1955-06-13","sign":"Gemini"},{"date":"1955-07-08","sign":"Cancer"},{"date":"1955-08-01","sign":"Leo"},{"date":"1955-08-26","sign":"Virgo"},{"date":"1955-09-19","sign":"Libra"},{"date":"1955-10-13","sign":"Scorpio"},{"date":"1955-11-06","sign":"Sagittarius"},{"date":"1955-11-30","sign":"Capricorn"},{"date":"1955-12-24","sign":"Aquarius"},{"date":"1956-01-18","sign":"Pisces"},{"date":"1956-02-11","sign":"Aries"},{"date":"1956-03-08","sign":"Taurus"},{"date":"1956-04-04","sign":"Gemini"},{"date":"1956-05-08","sign":"Cancer"},{"date":"1956-06-24","sign":"Gemini"},{"date":"1956-08-04","sign":"Cancer"},{"date":"1956-09-08","sign":"Leo"},{"date":"1956-10-06","sign":"Virgo"},{"date":"1956-11-01","sign":"Libra"},{"date":"1956-11-26","sign":"Scorpio"},{"date":"1956-12-20","sign":"Sagittarius"},{"date":"1957-01-13","sign":"Capricorn"},{"date":"1957-02-06","sign":"Aquarius"},{"date":"1957-03-02","sign":"Pisces"},{"date":"1957-03-26","sign":"Aries"},{"date":"1957-04-19","sign":"Taurus"},{"date":"1957-05-13","sign":"Gemini"},{"date":"1957-06-07","sign":"Cancer"},{"date":"1957-07-01","sign":"Leo"},{"date":"1957-07-26","sign":"Virgo"},{"date":"1957-08-20","sign":"Libra"},{"date":"1957-09-14","sign":"Scorpio"},{"date":"1957-10-10","sign":"Sagittarius"},{"date":"1957-11-06","sign":"Capricorn"},{"date":"1957-12-07","sign":"Aquarius"},{"date":"1958-04-07","sign":"Pisces"},{"date":"1958-05-05","sign":"Aries"},{"date":"1958-06-01","sign":"Taurus"},{"date":"1958-06-27","sign":"Gemini"},{"date":"1958-07-22","sign":"Cancer"},{"date":"1958-08-16","sign":"Leo"},{"date":"1958-09-10","sign":"Virgo"},{"date":"1958-10-04","sign":"Libra"},{"date":"1958-10-28","sign":"Scorpio"},{"date":"1958-11-21","sign":"Sagittarius"},{"date":"1958-12-14","sign":"Capricorn"},{"date":"1959-01-07","sign":"Aquarius"},{"date":"1959-01-31","sign":"Pisces"},{"date":"1959-02-24","sign":"Aries"},{"date":"1959-03-21","sign":"Taurus"},{"date":"1959-04-15","sign":"Gemini"},{"date":"1959-05-11","sign":"Cancer"},{"date":"1959-06-07","sign":"Leo"},{"date":"1959-07-09","sign":"Virgo"},{"date":"1959-09-20","sign":"Leo"},{"date":"1959-09-25","sign":"Virgo"},{"date":"1959-11-10","sign":"Libra"},{"date":"1959-12-08","sign":"Scorpio"},{"date":"1960-01-02","sign":"Sagittarius"},{"date":"1960-01-27","sign":"Capricorn"},{"date":"1960-02-21","sign":"Aquarius"},{"date":"1960-03-16","sign":"Pisces"},{"date":"1960-04-09","sign":"Aries"},{"date":"1960-05-04","sign":"Taurus"},{"date":"1960-05-28","sign":"Gemini"},{"date":"1960-06-22","sign":"Cancer"},{"date":"1960-07-16","sign":"Leo"},{"date":"1960-08-09","sign":"Virgo"},{"date":"1960-09-03","sign":"Libra"},{"date":"1960-09-27","sign":"Scorpio"},{"date":"1960-10-22","sign":"Sagittarius"},{"date":"1960-11-15","sign":"Capricorn"},{"date":"1960-12-10","sign":"Aquarius"},{"date":"1961-01-05","sign":"Pisces"},{"date":"1961-02-02","sign":"Aries"},{"date":"1961-06-06","sign":"Taurus"},{"date":"1961-07-07","sign":"Gemini"},{"date":"1961-08-04","sign":"Cancer"},{"date":"1961-08-30","sign":"Leo"},{"date":"1961-09-24","sign":"Virgo"},{"date":"1961-10-18","sign":"Libra"},{"date":"1961-11-11","sign":"Scorpio"},{"date":"1961-12-05","sign":"Sagittarius"},{"date":"1961-12-29","sign":"Capricorn"},{"date":"1962-01-22","sign":"Aquarius"},{"date":"1962-02-15","sign":"Pisces"},{"date":"1962-03-11","sign":"Aries"},{"date":"1962-04-04","sign":"Taurus"},{"date":"1962-04-28","sign":"Gemini"},{"date":"1962-05-23","sign":"Cancer"},{"date":"1962-06-17","sign":"Leo"},{"date":"1962-07-13","sign":"Virgo"},{"date":"1962-08-09","sign":"Libra"},{"date":"1962-09-07","sign":"Scorpio"},{"date":"1963-01-07","sign":"Sagittarius"},{"date":"1963-02-06","sign":"Capricorn"},{"date":"1963-03-04","sign":"Aquarius"},{"date":"1963-03-30","sign":"Pisces"},{"date":"1963-04-24","sign":"Aries"},{"date":"1963-05-19","sign":"Taurus"},{"date":"1963-06-13","sign":"Gemini"},{"date":"1963-07-07","sign":"Cancer"},{"date":"1963-08-01","sign":"Leo"},{"date":"1963-08-25","sign":"Virgo"},{"date":"1963-09-18","sign":"Libra"},{"date":"1963-10-12","sign":"Scorpio"},{"date":"1963-11-06","sign":"Sagittarius"},{"date":"1963-11-30","sign":"Capricorn"},{"date":"1963-12-24","sign":"Aquarius"},{"date":"1964-01-17","sign":"Pisces"},{"date":"1964-02-11","sign":"Aries"},{"date":"1964-03-08","sign":"Taurus"},{"date":"1964-04-04","sign":"Gemini"},{"date":"1964-05-09","sign":"Cancer"},{"date":"1964-06-18","sign":"Gemini"},{"date":"1964-08-05","sign":"Cancer"},{"date":"1964-09-08","sign":"Leo"},{"date":"1964-10-06","sign":"Virgo"},{"date":"1964-10-31","sign":"Libra"},{"date":"1964-11-25","sign":"Scorpio"},{"date":"1964-12-19","sign":"Sagittarius"},{"date":"1965-01-12","sign":"Capricorn"},{"date":"1965-02-05","sign":"Aquarius"},{"date":"1965-03-01","sign":"Pisces"},{"date":"1965-03-25","sign":"Aries"},{"date":"1965-04-19","sign":"Taurus"},{"date":"1965-05-13","sign":"Gemini"},{"date":"1965-06-06","sign":"Cancer"},{"date":"1965-07-01","sign":"Leo"},{"date":"1965-07-26","sign":"Virgo"},{"date":"1965-08-20","sign":"Libra"},{"date":"1965-09-14","sign":"Scorpio"},{"date":"1965-10-10","sign":"Sagittarius"},{"date":"1965-11-06","sign":"Capricorn"},{"date":"1965-12-07","sign":"Aquarius"},{"date":"1966-02-07","sign":"Capricorn"},{"date":"1966-02-25","sign":"Aquarius"},{"date":"1966-04-07","sign":"Pisces"},{"date":"1966-05-05","sign":"Aries"},{"date":"1966-06-01","sign":"Taurus"},{"date":"1966-06-26","sign":"Gemini"},{"date":"1966-07-22","sign":"Cancer"},{"date":"1966-08-16","sign":"Leo"},{"date":"1966-09-09","sign":"Virgo"},{"date":"1966-10-03","sign":"Libra"},{"date":"1966-10-27","sign":"Scorpio"},{"date":"1966-11-20","sign":"Sagittarius"},{"date":"1966-12-14","sign":"Capricorn"},{"date":"1967-01-07","sign":"Aquarius"},{"date":"1967-01-31","sign":"Pisces"},{"date":"1967-02-24","sign":"Aries"},{"date":"1967-03-20","sign":"Taurus"},{"date":"1967-04-14","sign":"Gemini"},{"date":"1967-05-10","sign":"Cancer"},{"date":"1967-06-07","sign":"Leo"},{"date":"1967-07-09","sign":"Virgo"},{"date":"1967-09-09","sign":"Leo"},{"date":"1967-10-02","sign":"Virgo"},{"date":"1967-11-10","sign":"Libra"},{"date":"1967-12-07","sign":"Scorpio"},{"date":"1968-01-02","sign":"Sagittarius"},{"date":"1968-01-27","sign":"Capricorn"},{"date":"1968-02-20","sign":"Aquarius"},{"date":"1968-03-16","sign":"Pisces"},{"date":"1968-04-09","sign":"Aries"},{"date":"1968-05-03","sign":"Taurus"},{"date":"1968-05-28","sign":"Gemini"},{"date":"1968-06-21","sign":"Cancer"},{"date":"1968-07-16","sign":"Leo"},{"date":"1968-08-09","sign":"Virgo"},{"date":"1968-09-02","sign":"Libra"},{"date":"1968-09-27","sign":"Scorpio"},{"date":"1968-10-21","sign":"Sagittarius"},{"date":"1968-11-15","sign":"Capricorn"},{"date":"1968-12-10","sign":"Aquarius"},{"date":"1969-01-05","sign":"Pisces"},{"date":"1969-02-02","sign":"Aries"},{"date":"1969-06-06","sign":"Taurus"},{"date":"1969-07-07","sign":"Gemini"},{"date":"1969-08-03","sign":"Cancer"},{"date":"1969-08-29","sign":"Leo"},{"date":"1969-09-23","sign":"Virgo"},{"date":"1969-10-18","sign":"Libra"},{"date":"1969-11-11","sign":"Scorpio"},{"date":"1969-12-05","sign":"Sagittarius"},{"date":"1969-12-28","sign":"Capricorn"},{"date":"1970-01-21","sign":"Aquarius"},{"date":"1970-02-14","sign":"Pisces"},{"date":"1970-03-10","sign":"Aries"},{"date":"1970-04-03","sign":"Taurus"},{"date":"1970-04-28","sign":"Gemini"},{"date":"1970-05-23","sign":"Cancer"},{"date":"1970-06-17","sign":"Leo"},{"date":"1970-07-13","sign":"Virgo"},{"date":"1970-08-08","sign":"Libra"},{"date":"1970-09-07","sign":"Scorpio"},{"date":"1971-01-07","sign":"Sagittarius"},{"date":"1971-02-06","sign":"Capricorn"},{"date":"1971-03-04","sign":"Aquarius"},{"date":"1971-03-30","sign":"Pisces"},{"date":"1971-04-24","sign":"Aries"},{"date":"1971-05-19","sign":"Taurus"},{"date":"1971-06-12","sign":"Gemini"},{"date":"1971-07-07","sign":"Cancer"},{"date":"1971-07-31","sign":"Leo"},{"date":"1971-08-25","sign":"Virgo"},{"date":"1971-09-18","sign":"Libra"},{"date":"1971-10-12","sign":"Scorpio"},{"date":"1971-11-05","sign":"Sagittarius"},{"date":"1971-11-29","sign":"Capricorn"},{"date":"1971-12-23","sign":"Aquarius"},{"date":"1972-01-17","sign":"Pisces"},{"date":"1972-02-10","sign":"Aries"},{"date":"1972-03-07","sign":"Taurus"},{"date":"1972-04-04","sign":"Gemini"},{"date":"1972-05-11","sign":"Cancer"},{"date":"1972-06-12","sign":"Gemini"},{"date":"1972-08-06","sign":"Cancer"},{"date":"1972-09-08","sign":"Leo"},{"date":"1972-10-05","sign":"Virgo"},{"date":"1972-10-31","sign":"Libra"},{"date":"1972-11-25","sign":"Scorpio"},{"date":"1972-12-19","sign":"Sagittarius"},{"date":"1973-01-12","sign":"Capricorn"},{"date":"1973-02-05","sign":"Aquarius"},{"date":"1973-03-01","sign":"Pisces"},{"date":"1973-03-25","sign":"Aries"},{"date":"1973-04-18","sign":"Taurus"},{"date":"1973-05-12","sign":"Gemini"},{"date":"1973-06-06","sign":"Cancer"},{"date":"1973-06-30","sign":"Leo"},{"date":"1973-07-25","sign":"Virgo"},{"date":"1973-08-19","sign":"Libra"},{"date":"1973-09-13","sign":"Scorpio"},{"date":"1973-10-09","sign":"Sagittarius"},{"date":"1973-11-06","sign":"Capricorn"},{"date":"1973-12-08","sign":"Aquarius"},{"date":"1974-01-30","sign":"Capricorn"},{"date":"1974-03-01","sign":"Aquarius"},{"date":"1974-04-07","sign":"Pisces"},{"date":"1974-05-05","sign":"Aries"},{"date":"1974-05-31","sign":"Taurus"},{"date":"1974-06-26","sign":"Gemini"},{"date":"1974-07-21","sign":"Cancer"},{"date":"1974-08-15","sign":"Leo"},{"date":"1974-09-08","sign":"Virgo"},{"date":"1974-10-03","sign":"Libra"},{"date":"1974-10-27","sign":"Scorpio"},{"date":"1974-11-19","sign":"Sagittarius"},{"date":"1974-12-13","sign":"Capricorn"},{"date":"1975-01-06","sign":"Aquarius"},{"date":"1975-01-30","sign":"Pisces"},{"date":"1975-02-23","sign":"Aries"},{"date":"1975-03-20","sign":"Taurus"},{"date":"1975-04-14","sign":"Gemini"},{"date":"1975-05-10","sign":"Cancer"},{"date":"1975-06-06","sign":"Leo"},{"date":"1975-07-09","sign":"Virgo"},{"date":"1975-09-03","sign":"Leo"},{"date":"1975-10-04","sign":"Virgo"},{"date":"1975-11-10","sign":"Libra"},{"date":"1975-12-07","sign":"Scorpio"},{"date":"1976-01-02","sign":"Sagittarius"},{"date":"1976-01-26","sign":"Capricorn"},{"date":"1976-02-20","sign":"Aquarius"},{"date":"1976-03-15","sign":"Pisces"},{"date":"1976-04-08","sign":"Aries"},{"date":"1976-05-03","sign":"Taurus"},{"date":"1976-05-27","sign":"Gemini"},{"date":"1976-06-21","sign":"Cancer"},{"date":"1976-07-15","sign":"Leo"},{"date":"1976-08-08","sign":"Virgo"},{"date":"1976-09-02","sign":"Libra"},{"date":"1976-09-26","sign":"Scorpio"},{"date":"1976-10-21","sign":"Sagittarius"},{"date":"1976-11-14","sign":"Capricorn"},{"date":"1976-12-10","sign":"Aquarius"},{"date":"1977-01-05","sign":"Pisces"},{"date":"1977-02-02","sign":"Aries"},{"date":"1977-06-06","sign":"Taurus"},{"date":"1977-07-07","sign":"Gemini"},{"date":"1977-08-03","sign":"Cancer"},{"date":"1977-08-29","sign":"Leo"},{"date":"1977-09-23","sign":"Virgo"},{"date":"1977-10-17","sign":"Libra"},{"date":"1977-11-10","sign":"Scorpio"},{"date":"1977-12-04","sign":"Sagittarius"},{"date":"1977-12-28","sign":"Capricorn"},{"date":"1978-01-21","sign":"Aquarius"},{"date":"1978-02-14","sign":"Pisces"},{"date":"1978-03-10","sign":"Aries"},{"date":"1978-04-03","sign":"Taurus"},{"date":"1978-04-27","sign":"Gemini"},{"date":"1978-05-22","sign":"Cancer"},{"date":"1978-06-16","sign":"Leo"},{"date":"1978-07-12","sign":"Virgo"},{"date":"1978-08-08","sign":"Libra"},{"date":"1978-09-07","sign":"Scorpio"},{"date":"1979-01-07","sign":"Sagittarius"},{"date":"1979-02-05","sign":"Capricorn"},{"date":"1979-03-04","sign":"Aquarius"},{"date":"1979-03-29","sign":"Pisces"},{"date":"1979-04-23","sign":"Aries"},{"date":"1979-05-18","sign":"Taurus"},{"date":"1979-06-12","sign":"Gemini"},{"date":"1979-07-06","sign":"Cancer"},{"date":"1979-07-31","sign":"Leo"},{"date":"1979-08-24","sign":"Virgo"},{"date":"1979-09-17","sign":"Libra"},{"date":"1979-10-11","sign":"Scorpio"},{"date":"1979-11-04","sign":"Sagittarius"},{"date":"1979-11-29","sign":"Capricorn"},{"date":"1979-12-23","sign":"Aquarius"},{"date":"1980-01-16","sign":"Pisces"},{"date":"1980-02-10","sign":"Aries"},{"date":"1980-03-07","sign":"Taurus"},{"date":"1980-04-04","sign":"Gemini"},{"date":"1980-05-13","sign":"Cancer"},{"date":"1980-06-05","sign":"Gemini"},{"date":"1980-08-07","sign":"Cancer"},{"date":"1980-09-08","sign":"Leo"},{"date":"1980-10-05","sign":"Virgo"},{"date":"1980-10-30","sign":"Libra"},{"date":"1980-11-24","sign":"Scorpio"},{"date":"1980-12-18","sign":"Sagittarius"},{"date":"1981-01-11","sign":"Capricorn"},{"date":"1981-02-04","sign":"Aquarius"},{"date":"1981-02-28","sign":"Pisces"},{"date":"1981-03-24","sign":"Aries"},{"date":"1981-04-18","sign":"Taurus"},{"date":"1981-05-12","sign":"Gemini"},{"date":"1981-06-05","sign":"Cancer"},{"date":"1981-06-30","sign":"Leo"},{"date":"1981-07-25","sign":"Virgo"},{"date":"1981-08-19","sign":"Libra"},{"date":"1981-09-13","sign":"Scorpio"},{"date":"1981-10-09","sign":"Sagittarius"},{"date":"1981-11-06","sign":"Capricorn"},{"date":"1981-12-09","sign":"Aquarius"},{"date":"1982-01-23","sign":"Capricorn"},{"date":"1982-03-02","sign":"Aquarius"},{"date":"1982-04-07","sign":"Pisces"},{"date":"1982-05-05","sign":"Aries"},{"date":"1982-05-31","sign":"Taurus"},{"date":"1982-06-26","sign":"Gemini"},{"date":"1982-07-21","sign":"Cancer"},{"date":"1982-08-14","sign":"Leo"},{"date":"1982-09-08","sign":"Virgo"},{"date":"1982-10-02","sign":"Libra"},{"date":"1982-10-26","sign":"Scorpio"},{"date":"1982-11-19","sign":"Sagittarius"},{"date":"1982-12-13","sign":"Capricorn"},{"date":"1983-01-06","sign":"Aquarius"},{"date":"1983-01-30","sign":"Pisces"},{"date":"1983-02-23","sign":"Aries"},{"date":"1983-03-19","sign":"Taurus"},{"date":"1983-04-13","sign":"Gemini"},{"date":"1983-05-09","sign":"Cancer"},{"date":"1983-06-06","sign":"Leo"},{"date":"1983-07-10","sign":"Virgo"},{"date":"1983-08-27","sign":"Leo"},{"date":"1983-10-06","sign":"Virgo"},{"date":"1983-11-09","sign":"Libra"},{"date":"1983-12-07","sign":"Scorpio"},{"date":"1984-01-01","sign":"Sagittarius"},{"date":"1984-01-26","sign":"Capricorn"},{"date":"1984-02-19","sign":"Aquarius"},{"date":"1984-03-15","sign":"Pisces"},{"date":"1984-04-08","sign":"Aries"},{"date":"1984-05-02","sign":"Taurus"},{"date":"1984-05-27","sign":"Gemini"},{"date":"1984-06-20","sign":"Cancer"},{"date":"1984-07-14","sign":"Leo"},{"date":"1984-08-08","sign":"Virgo"},{"date":"1984-09-01","sign":"Libra"},{"date":"1984-09-26","sign":"Scorpio"},{"date":"1984-10-20","sign":"Sagittarius"},{"date":"1984-11-14","sign":"Capricorn"},{"date":"1984-12-09","sign":"Aquarius"},{"date":"1985-01-04","sign":"Pisces"},{"date":"1985-02-02","sign":"Aries"},{"date":"1985-06-06","sign":"Taurus"},{"date":"1985-07-06","sign":"Gemini"},{"date":"1985-08-02","sign":"Cancer"},{"date":"1985-08-28","sign":"Leo"},{"date":"1985-09-22","sign":"Virgo"},{"date":"1985-10-17","sign":"Libra"},{"date":"1985-11-10","sign":"Scorpio"},{"date":"1985-12-04","sign":"Sagittarius"},{"date":"1985-12-27","sign":"Capricorn"},{"date":"1986-01-20","sign":"Aquarius"},{"date":"1986-02-13","sign":"Pisces"},{"date":"1986-03-09","sign":"Aries"},{"date":"1986-04-02","sign":"Taurus"},{"date":"1986-04-27","sign":"Gemini"},{"date":"1986-05-22","sign":"Cancer"},{"date":"1986-06-16","sign":"Leo"},{"date":"1986-07-12","sign":"Virgo"},{"date":"1986-08-08","sign":"Libra"},{"date":"1986-09-07","sign":"Scorpio"},{"date":"1987-01-07","sign":"Sagittarius"},{"date":"1987-02-05","sign":"Capricorn"},{"date":"1987-03-03","sign":"Aquarius"},{"date":"1987-03-29","sign":"Pisces"},{"date":"1987-04-23","sign":"Aries"},{"date":"1987-05-17","sign":"Taurus"},{"date":"1987-06-11","sign":"Gemini"},{"date":"1987-07-06","sign":"Cancer"},{"date":"1987-07-30","sign":"Leo"},{"date":"1987-08-24","sign":"Virgo"},{"date":"1987-09-17","sign":"Libra"},{"date":"1987-10-11","sign":"Scorpio"},{"date":"1987-11-04","sign":"Sagittarius"},{"date":"1987-11-28","sign":"Capricorn"},{"date":"1987-12-22","sign":"Aquarius"},{"date":"1988-01-16","sign":"Pisces"},{"date":"1988-02-10","sign":"Aries"},{"date":"1988-03-06","sign":"Taurus"},{"date":"1988-04-04","sign":"Gemini"},{"date":"1988-05-18","sign":"Cancer"},{"date":"1988-05-27","sign":"Gemini"},{"date":"1988-08-07","sign":"Cancer"},{"date":"1988-09-07","sign":"Leo"},{"date":"1988-10-05","sign":"Virgo"},{"date":"1988-10-30","sign":"Libra"},{"date":"1988-11-24","sign":"Scorpio"},{"date":"1988-12-18","sign":"Sagittarius"},{"date":"1989-01-11","sign":"Capricorn"},{"date":"1989-02-04","sign":"Aquarius"},{"date":"1989-02-28","sign":"Pisces"},{"date":"1989-03-24","sign":"Aries"},{"date":"1989-04-17","sign":"Taurus"},{"date":"1989-05-11","sign":"Gemini"},{"date":"1989-06-05","sign":"Cancer"},{"date":"1989-06-29","sign":"Leo"},{"date":"1989-07-24","sign":"Virgo"},{"date":"1989-08-18","sign":"Libra"},{"date":"1989-09-13","sign":"Scorpio"},{"date":"1989-10-09","sign":"Sagittarius"},{"date":"1989-11-05","sign":"Capricorn"},{"date":"1989-12-10","sign":"Aquarius"},{"date":"1990-01-17","sign":"Capricorn"},{"date":"1990-03-04","sign":"Aquarius"},{"date":"1990-04-06","sign":"Pisces"},{"date":"1990-05-04","sign":"Aries"},{"date":"1990-05-30","sign":"Taurus"},{"date":"1990-06-25","sign":"Gemini"},{"date":"1990-07-20","sign":"Cancer"},{"date":"1990-08-14","sign":"Leo"},{"date":"1990-09-07","sign":"Virgo"},{"date":"1990-10-02","sign":"Libra"},{"date":"1990-10-26","sign":"Scorpio"},{"date":"1990-11-18","sign":"Sagittarius"},{"date":"1990-12-12","sign":"Capricorn"},{"date":"1991-01-05","sign":"Aquarius"},{"date":"1991-01-29","sign":"Pisces"},{"date":"1991-02-22","sign":"Aries"},{"date":"1991-03-19","sign":"Taurus"},{"date":"1991-04-13","sign":"Gemini"},{"date":"1991-05-09","sign":"Cancer"},{"date":"1991-06-06","sign":"Leo"},{"date":"1991-07-11","sign":"Virgo"},{"date":"1991-08-22","sign":"Leo"},{"date":"1991-10-07","sign":"Virgo"},{"date":"1991-11-09","sign":"Libra"},{"date":"1991-12-06","sign":"Scorpio"},{"date":"1992-01-01","sign":"Sagittarius"},{"date":"1992-01-25","sign":"Capricorn"},{"date":"1992-02-19","sign":"Aquarius"},{"date":"1992-03-14","sign":"Pisces"},{"date":"1992-04-07","sign":"Aries"},{"date":"1992-05-02","sign":"Taurus"},{"date":"1992-05-26","sign":"Gemini"},{"date":"1992-06-19","sign":"Cancer"},{"date":"1992-07-14","sign":"Leo"},{"date":"1992-08-07","sign":"Virgo"},{"date":"1992-09-01","sign":"Libra"},{"date":"1992-09-25","sign":"Scorpio"},{"date":"1992-10-20","sign":"Sagittarius"},{"date":"1992-11-14","sign":"Capricorn"},{"date":"1992-12-09","sign":"Aquarius"},{"date":"1993-01-04","sign":"Pisces"},{"date":"1993-02-03","sign":"Aries"},{"date":"1993-06-06","sign":"Taurus"},{"date":"1993-07-06","sign":"Gemini"},{"date":"1993-08-02","sign":"Cancer"},{"date":"1993-08-28","sign":"Leo"},{"date":"1993-09-22","sign":"Virgo"},{"date":"1993-10-16","sign":"Libra"},{"date":"1993-11-09","sign":"Scorpio"},{"date":"1993-12-03","sign":"Sagittarius"},{"date":"1993-12-27","sign":"Capricorn"},{"date":"1994-01-20","sign":"Aquarius"},{"date":"1994-02-13","sign":"Pisces"},{"date":"1994-03-09","sign":"Aries"},{"date":"1994-04-02","sign":"Taurus"},{"date":"1994-04-26","sign":"Gemini"},{"date":"1994-05-21","sign":"Cancer"},{"date":"1994-06-15","sign":"Leo"},{"date":"1994-07-11","sign":"Virgo"},{"date":"1994-08-08","sign":"Libra"},{"date":"1994-09-08","sign":"Scorpio"},{"date":"1995-01-08","sign":"Sagittarius"},{"date":"1995-02-05","sign":"Capricorn"},{"date":"1995-03-03","sign":"Aquarius"},{"date":"1995-03-28","sign":"Pisces"},{"date":"1995-04-22","sign":"Aries"},{"date":"1995-05-17","sign":"Taurus"},{"date":"1995-06-11","sign":"Gemini"},{"date":"1995-07-05","sign":"Cancer"},{"date":"1995-07-30","sign":"Leo"},{"date":"1995-08-23","sign":"Virgo"},{"date":"1995-09-16","sign":"Libra"},{"date":"1995-10-10","sign":"Scorpio"},{"date":"1995-11-03","sign":"Sagittarius"},{"date":"1995-11-28","sign":"Capricorn"},{"date":"1995-12-22","sign":"Aquarius"},{"date":"1996-01-15","sign":"Pisces"},{"date":"1996-02-09","sign":"Aries"},{"date":"1996-03-06","sign":"Taurus"},{"date":"1996-04-04","sign":"Gemini"},{"date":"1996-08-07","sign":"Cancer"},{"date":"1996-09-07","sign":"Leo"},{"date":"1996-10-04","sign":"Virgo"},{"date":"1996-10-30","sign":"Libra"},{"date":"1996-11-23","sign":"Scorpio"},{"date":"1996-12-17","sign":"Sagittarius"},{"date":"1997-01-10","sign":"Capricorn"},{"date":"1997-02-03","sign":"Aquarius"},{"date":"1997-02-27","sign":"Pisces"},{"date":"1997-03-23","sign":"Aries"},{"date":"1997-04-16","sign":"Taurus"},{"date":"1997-05-11","sign":"Gemini"},{"date":"1997-06-04","sign":"Cancer"},{"date":"1997-06-29","sign":"Leo"},{"date":"1997-07-24","sign":"Virgo"},{"date":"1997-08-18","sign":"Libra"},{"date":"1997-09-12","sign":"Scorpio"},{"date":"1997-10-08","sign":"Sagittarius"},{"date":"1997-11-05","sign":"Capricorn"},{"date":"1997-12-12","sign":"Aquarius"},{"date":"1998-01-10","sign":"Capricorn"},{"date":"1998-03-05","sign":"Aquarius"},{"date":"1998-04-06","sign":"Pisces"},{"date":"1998-05-04","sign":"Aries"},{"date":"1998-05-30","sign":"Taurus"},{"date":"1998-06-25","sign":"Gemini"},{"date":"1998-07-20","sign":"Cancer"},{"date":"1998-08-13","sign":"Leo"},{"date":"1998-09-07","sign":"Virgo"},{"date":"1998-10-01","sign":"Libra"},{"date":"1998-10-25","sign":"Scorpio"},{"date":"1998-11-18","sign":"Sagittarius"},{"date":"1998-12-12","sign":"Capricorn"},{"date":"1999-01-05","sign":"Aquarius"},{"date":"1999-01-29","sign":"Pisces"},{"date":"1999-02-22","sign":"Aries"},{"date":"1999-03-18","sign":"Taurus"},{"date":"1999-04-13","sign":"Gemini"},{"date":"1999-05-09","sign":"Cancer"},{"date":"1999-06-06","sign":"Leo"},{"date":"1999-07-13","sign":"Virgo"},{"date":"1999-08-16","sign":"Leo"},{"date":"1999-10-08","sign":"Virgo"},{"date":"1999-11-09","sign":"Libra"},{"date":"1999-12-06","sign":"Scorpio"},{"date":"1999-12-31","sign":"Sagittarius"},{"date":"2000-01-25","sign":"Capricorn"},{"date":"2000-02-18","sign":"Aquarius"},{"date":"2000-03-13","sign":"Pisces"},{"date":"2000-04-07","sign":"Aries"},{"date":"2000-05-01","sign":"Taurus"},{"date":"2000-05-26","sign":"Gemini"},{"date":"2000-06-19","sign":"Cancer"},{"date":"2000-07-13","sign":"Leo"},{"date":"2000-08-07","sign":"Virgo"},{"date":"2000-08-31","sign":"Libra"},{"date":"2000-09-25","sign":"Scorpio"},{"date":"2000-10-19","sign":"Sagittarius"},{"date":"2000-11-13","sign":"Capricorn"},{"date":"2000-12-08","sign":"Aquarius"},{"date":"2001-01-04","sign":"Pisces"},{"date":"2001-02-03","sign":"Aries"},{"date":"2001-06-06","sign":"Taurus"},{"date":"2001-07-06","sign":"Gemini"},{"date":"2001-08-02","sign":"Cancer"},{"date":"2001-08-27","sign":"Leo"},{"date":"2001-09-21","sign":"Virgo"},{"date":"2001-10-15","sign":"Libra"},{"date":"2001-11-09","sign":"Scorpio"},{"date":"2001-12-02","sign":"Sagittarius"},{"date":"2001-12-26","sign":"Capricorn"},{"date":"2002-01-19","sign":"Aquarius"},{"date":"2002-02-12","sign":"Pisces"},{"date":"2002-03-08","sign":"Aries"},{"date":"2002-04-01","sign":"Taurus"},{"date":"2002-04-26","sign":"Gemini"},{"date":"2002-05-21","sign":"Cancer"},{"date":"2002-06-15","sign":"Leo"},{"date":"2002-07-11","sign":"Virgo"},{"date":"2002-08-07","sign":"Libra"},{"date":"2002-09-08","sign":"Scorpio"},{"date":"2003-01-08","sign":"Sagittarius"},{"date":"2003-02-05","sign":"Capricorn"},{"date":"2003-03-03","sign":"Aquarius"},{"date":"2003-03-28","sign":"Pisces"},{"date":"2003-04-22","sign":"Aries"},{"date":"2003-05-16","sign":"Taurus"},{"date":"2003-06-10","sign":"Gemini"},{"date":"2003-07-05","sign":"Cancer"},{"date":"2003-07-29","sign":"Leo"},{"date":"2003-08-22","sign":"Virgo"},{"date":"2003-09-16","sign":"Libra"},{"date":"2003-10-10","sign":"Scorpio"},{"date":"2003-11-03","sign":"Sagittarius"},{"date":"2003-11-27","sign":"Capricorn"},{"date":"2003-12-21","sign":"Aquarius"},{"date":"2004-01-15","sign":"Pisces"},{"date":"2004-02-09","sign":"Aries"},{"date":"2004-03-06","sign":"Taurus"},{"date":"2004-04-04","sign":"Gemini"},{"date":"2004-08-07","sign":"Cancer"},{"date":"2004-09-07","sign":"Leo"},{"date":"2004-10-04","sign":"Virgo"},{"date":"2004-10-29","sign":"Libra"},{"date":"2004-11-23","sign":"Scorpio"},{"date":"2004-12-17","sign":"Sagittarius"},{"date":"2005-01-10","sign":"Capricorn"},{"date":"2005-02-03","sign":"Aquarius"},{"date":"2005-02-27","sign":"Pisces"},{"date":"2005-03-23","sign":"Aries"},{"date":"2005-04-16","sign":"Taurus"},{"date":"2005-05-10","sign":"Gemini"},{"date":"2005-06-04","sign":"Cancer"},{"date":"2005-06-28","sign":"Leo"},{"date":"2005-07-23","sign":"Virgo"},{"date":"2005-08-17","sign":"Libra"},{"date":"2005-09-12","sign":"Scorpio"},{"date":"2005-10-08","sign":"Sagittarius"},{"date":"2005-11-05","sign":"Capricorn"},{"date":"2005-12-16","sign":"Aquarius"},{"date":"2006-01-02","sign":"Capricorn"},{"date":"2006-03-05","sign":"Aquarius"},{"date":"2006-04-06","sign":"Pisces"},{"date":"2006-05-03","sign":"Aries"},{"date":"2006-05-30","sign":"Taurus"},{"date":"2006-06-24","sign":"Gemini"},{"date":"2006-07-19","sign":"Cancer"},{"date":"2006-08-13","sign":"Leo"},{"date":"2006-09-06","sign":"Virgo"},{"date":"2006-09-30","sign":"Libra"},{"date":"2006-10-24","sign":"Scorpio"},{"date":"2006-11-17","sign":"Sagittarius"},{"date":"2006-12-11","sign":"Capricorn"},{"date":"2007-01-04","sign":"Aquarius"},{"date":"2007-01-28","sign":"Pisces"},{"date":"2007-02-21","sign":"Aries"},{"date":"2007-03-18","sign":"Taurus"},{"date":"2007-04-12","sign":"Gemini"},{"date":"2007-05-08","sign":"Cancer"},{"date":"2007-06-06","sign":"Leo"},{"date":"2007-07-15","sign":"Virgo"},{"date":"2007-08-09","sign":"Leo"},{"date":"2007-10-08","sign":"Virgo"},{"date":"2007-11-09","sign":"Libra"},{"date":"2007-12-06","sign":"Scorpio"},{"date":"2007-12-31","sign":"Sagittarius"},{"date":"2008-01-24","sign":"Capricorn"},{"date":"2008-02-18","sign":"Aquarius"},{"date":"2008-03-13","sign":"Pisces"},{"date":"2008-04-06","sign":"Aries"},{"date":"2008-05-01","sign":"Taurus"},{"date":"2008-05-25","sign":"Gemini"},{"date":"2008-06-18","sign":"Cancer"},{"date":"2008-07-13","sign":"Leo"},{"date":"2008-08-06","sign":"Virgo"},{"date":"2008-08-31","sign":"Libra"},{"date":"2008-09-24","sign":"Scorpio"},{"date":"2008-10-19","sign":"Sagittarius"},{"date":"2008-11-13","sign":"Capricorn"},{"date":"2008-12-08","sign":"Aquarius"},{"date":"2009-01-04","sign":"Pisces"},{"date":"2009-02-03","sign":"Aries"},{"date":"2009-04-12","sign":"Pisces"},{"date":"2009-04-24","sign":"Aries"},{"date":"2009-06-06","sign":"Taurus"},{"date":"2009-07-05","sign":"Gemini"},{"date":"2009-08-01","sign":"Cancer"},{"date":"2009-08-27","sign":"Leo"},{"date":"2009-09-21","sign":"Virgo"},{"date":"2009-10-15","sign":"Libra"},{"date":"2009-11-08","sign":"Scorpio"},{"date":"2009-12-02","sign":"Sagittarius"},{"date":"2009-12-26","sign":"Capricorn"},{"date":"2010-01-19","sign":"Aquarius"},{"date":"2010-02-12","sign":"Pisces"},{"date":"2010-03-08","sign":"Aries"},{"date":"2010-04-01","sign":"Taurus"},{"date":"2010-04-25","sign":"Gemini"},{"date":"2010-05-20","sign":"Cancer"},{"date":"2010-06-14","sign":"Leo"},{"date":"2010-07-10","sign":"Virgo"},{"date":"2010-08-07","sign":"Libra"},{"date":"2010-09-09","sign":"Scorpio"},{"date":"2010-11-08","sign":"Libra"},{"date":"2010-11-30","sign":"Scorpio"},{"date":"2011-01-08","sign":"Sagittarius"},{"date":"2011-02-04","sign":"Capricorn"},{"date":"2011-03-02","sign":"Aquarius"},{"date":"2011-03-27","sign":"Pisces"},{"date":"2011-04-21","sign":"Aries"},{"date":"2011-05-16","sign":"Taurus"},{"date":"2011-06-10","sign":"Gemini"},{"date":"2011-07-04","sign":"Cancer"},{"date":"2011-07-29","sign":"Leo"},{"date":"2011-08-22","sign":"Virgo"},{"date":"2011-09-15","sign":"Libra"},{"date":"2011-10-09","sign":"Scorpio"},{"date":"2011-11-02","sign":"Sagittarius"},{"date":"2011-11-27","sign":"Capricorn"},{"date":"2011-12-21","sign":"Aquarius"},{"date":"2012-01-14","sign":"Pisces"},{"date":"2012-02-08","sign":"Aries"},{"date":"2012-03-05","sign":"Taurus"},{"date":"2012-04-04","sign":"Gemini"},{"date":"2012-08-08","sign":"Cancer"},{"date":"2012-09-07","sign":"Leo"},{"date":"2012-10-03","sign":"Virgo"},{"date":"2012-10-29","sign":"Libra"},{"date":"2012-11-22","sign":"Scorpio"},{"date":"2012-12-16","sign":"Sagittarius"},{"date":"2013-01-09","sign":"Capricorn"},{"date":"2013-02-02","sign":"Aquarius"},{"date":"2013-02-26","sign":"Pisces"},{"date":"2013-03-22","sign":"Aries"},{"date":"2013-04-15","sign":"Taurus"},{"date":"2013-05-10","sign":"Gemini"},{"date":"2013-06-03","sign":"Cancer"},{"date":"2013-06-28","sign":"Leo"},{"date":"2013-07-23","sign":"Virgo"},{"date":"2013-08-17","sign":"Libra"},{"date":"2013-09-11","sign":"Scorpio"},{"date":"2013-10-08","sign":"Sagittarius"},{"date":"2013-11-05","sign":"Capricorn"},{"date":"2014-03-06","sign":"Aquarius"},{"date":"2014-04-06","sign":"Pisces"},{"date":"2014-05-03","sign":"Aries"},{"date":"2014-05-29","sign":"Taurus"},{"date":"2014-06-24","sign":"Gemini"},{"date":"2014-07-19","sign":"Cancer"},{"date":"2014-08-12","sign":"Leo"},{"date":"2014-09-06","sign":"Virgo"},{"date":"2014-09-30","sign":"Libra"},{"date":"2014-10-24","sign":"Scorpio"},{"date":"2014-11-17","sign":"Sagittarius"},{"date":"2014-12-11","sign":"Capricorn"},{"date":"2015-01-04","sign":"Aquarius"},{"date":"2015-01-28","sign":"Pisces"},{"date":"2015-02-21","sign":"Aries"},{"date":"2015-03-17","sign":"Taurus"},{"date":"2015-04-12","sign":"Gemini"},{"date":"2015-05-08","sign":"Cancer"},{"date":"2015-06-06","sign":"Leo"},{"date":"2015-07-19","sign":"Virgo"},{"date":"2015-08-01","sign":"Leo"},{"date":"2015-10-09","sign":"Virgo"},{"date":"2015-11-09","sign":"Libra"},{"date":"2015-12-05","sign":"Scorpio"},{"date":"2015-12-30","sign":"Sagittarius"},{"date":"2016-01-24","sign":"Capricorn"},{"date":"2016-02-17","sign":"Aquarius"},{"date":"2016-03-12","sign":"Pisces"},{"date":"2016-04-06","sign":"Aries"},{"date":"2016-04-30","sign":"Taurus"},{"date":"2016-05-24","sign":"Gemini"},{"date":"2016-06-18","sign":"Cancer"},{"date":"2016-07-12","sign":"Leo"},{"date":"2016-08-06","sign":"Virgo"},{"date":"2016-08-30","sign":"Libra"},{"date":"2016-09-24","sign":"Scorpio"},{"date":"2016-10-18","sign":"Sagittarius"},{"date":"2016-11-12","sign":"Capricorn"},{"date":"2016-12-08","sign":"Aquarius"},{"date":"2017-01-03","sign":"Pisces"},{"date":"2017-02-04","sign":"Aries"},{"date":"2017-04-03","sign":"Pisces"},{"date":"2017-04-29","sign":"Aries"},{"date":"2017-06-06","sign":"Taurus"},{"date":"2017-07-05","sign":"Gemini"},{"date":"2017-08-01","sign":"Cancer"},{"date":"2017-08-26","sign":"Leo"},{"date":"2017-09-20","sign":"Virgo"},{"date":"2017-10-14","sign":"Libra"},{"date":"2017-11-07","sign":"Scorpio"},{"date":"2017-12-01","sign":"Sagittarius"},{"date":"2017-12-25","sign":"Capricorn"},{"date":"2018-01-18","sign":"Aquarius"},{"date":"2018-02-11","sign":"Pisces"},{"date":"2018-03-07","sign":"Aries"},{"date":"2018-03-31","sign":"Taurus"},{"date":"2018-04-25","sign":"Gemini"},{"date":"2018-05-20","sign":"Cancer"},{"date":"2018-06-14","sign":"Leo"},{"date":"2018-07-10","sign":"Virgo"},{"date":"2018-08-07","sign":"Libra"},{"date":"2018-09-09","sign":"Scorpio"},{"date":"2018-11-01","sign":"Libra"},{"date":"2018-12-03","sign":"Scorpio"},{"date":"2019-01-07","sign":"Sagittarius"},{"date":"2019-02-04","sign":"Capricorn"},{"date":"2019-03-02","sign":"Aquarius"},{"date":"2019-03-27","sign":"Pisces"},{"date":"2019-04-21","sign":"Aries"},{"date":"2019-05-15","sign":"Taurus"},{"date":"2019-06-09","sign":"Gemini"},{"date":"2019-07-04","sign":"Cancer"},{"date":"2019-07-28","sign":"Leo"},{"date":"2019-08-21","sign":"Virgo"},{"date":"2019-09-15","sign":"Libra"},{"date":"2019-10-09","sign":"Scorpio"},{"date":"2019-11-02","sign":"Sagittarius"},{"date":"2019-11-26","sign":"Capricorn"},{"date":"2019-12-20","sign":"Aquarius"},{"date":"2020-01-14","sign":"Pisces"},{"date":"2020-02-08","sign":"Aries"},{"date":"2020-03-05","sign":"Taurus"},{"date":"2020-04-04","sign":"Gemini"},{"date":"2020-08-08","sign":"Cancer"},{"date":"2020-09-06","sign":"Leo"},{"date":"2020-10-03","sign":"Virgo"},{"date":"2020-10-28","sign":"Libra"},{"date":"2020-11-22","sign":"Scorpio"},{"date":"2020-12-16","sign":"Sagittarius"},{"date":"2021-01-09","sign":"Capricorn"},{"date":"2021-02-02","sign":"Aquarius"},{"date":"2021-02-26","sign":"Pisces"},{"date":"2021-03-22","sign":"Aries"},{"date":"2021-04-15","sign":"Taurus"},{"date":"2021-05-09","sign":"Gemini"},{"date":"2021-06-03","sign":"Cancer"},{"date":"2021-06-27","sign":"Leo"},{"date":"2021-07-22","sign":"Virgo"},{"date":"2021-08-16","sign":"Libra"},{"date":"2021-09-11","sign":"Scorpio"},{"date":"2021-10-07","sign":"Sagittarius"},{"date":"2021-11-05","sign":"Capricorn"},{"date":"2022-03-06","sign":"Aquarius"},{"date":"2022-04-06","sign":"Pisces"},{"date":"2022-05-03","sign":"Aries"},{"date":"2022-05-29","sign":"Taurus"},{"date":"2022-06-23","sign":"Gemini"},{"date":"2022-07-18","sign":"Cancer"},{"date":"2022-08-12","sign":"Leo"},{"date":"2022-09-05","sign":"Virgo"},{"date":"2022-09-29","sign":"Libra"},{"date":"2022-10-23","sign":"Scorpio"},{"date":"2022-11-16","sign":"Sagittarius"},{"date":"2022-12-10","sign":"Capricorn"},{"date":"2023-01-03","sign":"Aquarius"},{"date":"2023-01-27","sign":"Pisces"},{"date":"2023-02-20","sign":"Aries"},{"date":"2023-03-17","sign":"Taurus"},{"date":"2023-04-11","sign":"Gemini"},{"date":"2023-05-08","sign":"Cancer"},{"date":"2023-06-06","sign":"Leo"},{"date":"2023-10-09","sign":"Virgo"},{"date":"2023-11-08","sign":"Libra"},{"date":"2023-12-05","sign":"Scorpio"},{"date":"2023-12-30","sign":"Sagittarius"},{"date":"2024-01-23","sign":"Capricorn"},{"date":"2024-02-17","sign":"Aquarius"},{"date":"2024-03-12","sign":"Pisces"},{"date":"2024-04-05","sign":"Aries"},{"date":"2024-04-29","sign":"Taurus"},{"date":"2024-05-24","sign":"Gemini"},{"date":"2024-06-17","sign":"Cancer"},{"date":"2024-07-12","sign":"Leo"},{"date":"2024-08-05","sign":"Virgo"},{"date":"2024-08-30","sign":"Libra"},{"date":"2024-09-23","sign":"Scorpio"},{"date":"2024-10-18","sign":"Sagittarius"},{"date":"2024-11-12","sign":"Capricorn"},{"date":"2024-12-07","sign":"Aquarius"},{"date":"2025-01-03","sign":"Pisces"},{"date":"2025-02-04","sign":"Aries"},{"date":"2025-03-27","sign":"Pisces"},{"date":"2025-05-01","sign":"Aries"},{"date":"2025-06-06","sign":"Taurus"},{"date":"2025-07-05","sign":"Gemini"},{"date":"2025-07-31","sign":"Cancer"},{"date":"2025-08-26","sign":"Leo"},{"date":"2025-09-20","sign":"Virgo"},{"date":"2025-10-14","sign":"Libra"},{"date":"2025-11-07","sign":"Scorpio"},{"date":"2025-12-01","sign":"Sagittarius"},{"date":"2025-12-25","sign":"Capricorn"},{"date":"2026-01-18","sign":"Aquarius"},{"date":"2026-02-10","sign":"Pisces"},{"date":"2026-03-06","sign":"Aries"},{"date":"2026-03-31","sign":"Taurus"},{"date":"2026-04-24","sign":"Gemini"},{"date":"2026-05-19","sign":"Cancer"},{"date":"2026-06-13","sign":"Leo"},{"date":"2026-07-10","sign":"Virgo"},{"date":"2026-08-07","sign":"Libra"},{"date":"2026-09-10","sign":"Scorpio"},{"date":"2026-10-25","sign":"Libra"},{"date":"2026-12-04","sign":"Scorpio"},{"date":"2027-01-07","sign":"Sagittarius"},{"date":"2027-02-04","sign":"Capricorn"},{"date":"2027-03-01","sign":"Aquarius"},{"date":"2027-03-26","sign":"Pisces"},{"date":"2027-04-20","sign":"Aries"},{"date":"2027-05-15","sign":"Taurus"},{"date":"2027-06-09","sign":"Gemini"},{"date":"2027-07-03","sign":"Cancer"},{"date":"2027-07-28","sign":"Leo"},{"date":"2027-08-21","sign":"Virgo"},{"date":"2027-09-14","sign":"Libra"},{"date":"2027-10-08","sign":"Scorpio"},{"date":"2027-11-01","sign":"Sagittarius"},{"date":"2027-11-25","sign":"Capricorn"},{"date":"2027-12-20","sign":"Aquarius"},{"date":"2028-01-13","sign":"Pisces"},{"date":"2028-02-07","sign":"Aries"},{"date":"2028-03-05","sign":"Taurus"},{"date":"2028-04-04","sign":"Gemini"},{"date":"2028-08-08","sign":"Cancer"},{"date":"2028-09-06","sign":"Leo"},{"date":"2028-10-02","sign":"Virgo"},{"date":"2028-10-28","sign":"Libra"},{"date":"2028-11-21","sign":"Scorpio"},{"date":"2028-12-15","sign":"Sagittarius"},{"date":"2029-01-08","sign":"Capricorn"},{"date":"2029-02-01","sign":"Aquarius"},{"date":"2029-02-25","sign":"Pisces"},{"date":"2029-03-21","sign":"Aries"},{"date":"2029-04-14","sign":"Taurus"},{"date":"2029-05-09","sign":"Gemini"},{"date":"2029-06-02","sign":"Cancer"},{"date":"2029-06-27","sign":"Leo"},{"date":"2029-07-22","sign":"Virgo"},{"date":"2029-08-16","sign":"Libra"},{"date":"2029-09-10","sign":"Scorpio"},{"date":"2029-10-07","sign":"Sagittarius"},{"date":"2029-11-06","sign":"Capricorn"},{"date":"2030-03-07","sign":"Aquarius"},{"date":"2030-04-05","sign":"Pisces"},{"date":"2030-05-02","sign":"Aries"},{"date":"2030-05-28","sign":"Taurus"},{"date":"2030-06-23","sign":"Gemini"},{"date":"2030-07-18","sign":"Cancer"},{"date":"2030-08-11","sign":"Leo"},{"date":"2030-09-05","sign":"Virgo"},{"date":"2030-09-29","sign":"Libra"},{"date":"2030-10-23","sign":"Scorpio"},{"date":"2030-11-16","sign":"Sagittarius"},{"date":"2030-12-10","sign":"Capricorn"},{"date":"2031-01-03","sign":"Aquarius"},{"date":"2031-01-27","sign":"Pisces"},{"date":"2031-02-20","sign":"Aries"},{"date":"2031-03-16","sign":"Taurus"},{"date":"2031-04-11","sign":"Gemini"},{"date":"2031-05-07","sign":"Cancer"},{"date":"2031-06-06","sign":"Leo"},{"date":"2031-10-09","sign":"Virgo"},{"date":"2031-11-08","sign":"Libra"},{"date":"2031-12-04","sign":"Scorpio"},{"date":"2031-12-29","sign":"Sagittarius"},{"date":"2032-01-23","sign":"Capricorn"},{"date":"2032-02-16","sign":"Aquarius"},{"date":"2032-03-11","sign":"Pisces"},{"date":"2032-04-05","sign":"Aries"},{"date":"2032-04-29","sign":"Taurus"},{"date":"2032-05-23","sign":"Gemini"},{"date":"2032-06-17","sign":"Cancer"},{"date":"2032-07-11","sign":"Leo"},{"date":"2032-08-05","sign":"Virgo"},{"date":"2032-08-29","sign":"Libra"},{"date":"2032-09-23","sign":"Scorpio"},{"date":"2032-10-17","sign":"Sagittarius"},{"date":"2032-11-11","sign":"Capricorn"},{"date":"2032-12-07","sign":"Aquarius"},{"date":"2033-01-03","sign":"Pisces"},{"date":"2033-02-05","sign":"Aries"},{"date":"2033-03-21","sign":"Pisces"},{"date":"2033-05-02","sign":"Aries"},{"date":"2033-06-06","sign":"Taurus"},{"date":"2033-07-04","sign":"Gemini"},{"date":"2033-07-31","sign":"Cancer"},{"date":"2033-08-25","sign":"Leo"},{"date":"2033-09-19","sign":"Virgo"},{"date":"2033-10-13","sign":"Libra"},{"date":"2033-11-06","sign":"Scorpio"},{"date":"2033-11-30","sign":"Sagittarius"},{"date":"2033-12-24","sign":"Capricorn"},{"date":"2034-01-17","sign":"Aquarius"},{"date":"2034-02-10","sign":"Pisces"},{"date":"2034-03-06","sign":"Aries"},{"date":"2034-03-30","sign":"Taurus"},{"date":"2034-04-24","sign":"Gemini"},{"date":"2034-05-19","sign":"Cancer"},{"date":"2034-06-13","sign":"Leo"},{"date":"2034-07-09","sign":"Virgo"},{"date":"2034-08-07","sign":"Libra"},{"date":"2034-09-12","sign":"Scorpio"},{"date":"2034-10-19","sign":"Libra"},{"date":"2034-12-06","sign":"Scorpio"},{"date":"2035-01-07","sign":"Sagittarius"},{"date":"2035-02-03","sign":"Capricorn"},{"date":"2035-03-01","sign":"Aquarius"},{"date":"2035-03-26","sign":"Pisces"},{"date":"2035-04-20","sign":"Aries"},{"date":"2035-05-14","sign":"Taurus"},{"date":"2035-06-08","sign":"Gemini"},{"date":"2035-07-03","sign":"Cancer"},{"date":"2035-07-27","sign":"Leo"},{"date":"2035-08-20","sign":"Virgo"},{"date":"2035-09-13","sign":"Libra"},{"date":"2035-10-08","sign":"Scorpio"},{"date":"2035-11-01","sign":"Sagittarius"},{"date":"2035-11-25","sign":"Capricorn"},{"date":"2035-12-19","sign":"Aquarius"}];
+const COMPAT_DATA = {"Aries|Aries":{"opening":"Two people who love the same way: fast, hot, and completely without subtlety. Aries Venus doesn't simmer, it ignites. It wants to be chased and it wants to chase, it flirts like it's a competitive sport, and it falls for people quickly and completely. Put two of them together and you get instant chemistry, instant intensity, and zero patience for slow-burn romance. This is a pairing that either combusts into something incredible within the first month or burns out just as fast.","clicks":"Neither one has to translate their urgency to the other, because they share it. Both move fast, both are direct about what they want, both find slow, cautious courtship exhausting rather than romantic. There's a mutual respect for boldness here \u2014 an Aries Venus person is drawn to confidence, and they've found someone who has exactly as much of it as they do. Dates feel like adventures. Conflict, when it happens, gets resolved quickly because neither one is interested in sulking or playing games. It's over as fast as it started, for better and for worse.","strains":"Two Aries Venuses in the same relationship means two people used to leading, not following, and neither one is naturally built for compromise. Both want to be the one who initiates, who decides where the date happens, who sets the pace of the relationship. That's a lot of friction when nobody wants the passenger seat. The bigger risk is that Aries Venus loves the chase more than the having \u2014 once the initial thrill cools, both partners might independently start wondering if the spark is gone, without either one being willing to be the one to slow down and actually work on it.","real_test":"This pairing survives on whether both people can learn to enjoy the plateau, not just the climb. Aries Venus is genuinely excellent at the beginning of things \u2014 the flirtation, the pursuit, the electric first few months \u2014 but relationships eventually require sitting still together, and that's the muscle neither partner has built. The real test comes the first time the excitement dips: does one of them reach for a fight just to feel something again, or does one of them simply drift toward a new spark somewhere else? If both partners can consciously choose to keep choosing each other after the initial fire settles into something steadier, this becomes a relationship with real electricity that never quite goes out. If neither can, it ends exactly as fast as it began."},"Aries|Taurus":{"opening":"Fire meets earth, and it's a genuinely useful collision. Aries Venus loves through pursuit, spontaneity, and heat \u2014 it wants to move fast and feel the thrill of newness. Taurus Venus loves through steadiness, sensuality, and time \u2014 it wants to build something slow and savor every part of it. On the surface these look incompatible, but there's an old pairing logic here: Aries brings the spark, Taurus brings the fuel that keeps it burning longer than Aries could manage alone.","clicks":"Aries is drawn to Taurus's calm, grounded confidence \u2014 someone who doesn't need to be chased because they already know their own worth, which is oddly magnetic to a sign that loves a challenge. Taurus, in turn, finds Aries's directness refreshing after a lifetime of overthinking; there's something relieving about a partner who just says what they want. Physically this pairing tends to have real heat, since both signs are deeply sensual, just expressed at different speeds. When it works, Aries teaches Taurus to leap sometimes, and Taurus teaches Aries that some things are worth waiting for.","strains":"The core friction is pace. Aries wants to move now \u2014 decide now, plan the trip now, escalate the relationship now. Taurus needs time to feel secure before committing to anything, and rushing makes it dig its heels in rather than speed up. Aries can read this as disinterest or coldness; Taurus can read Aries's urgency as reckless or even a little disrespectful of its own process. Stubbornness is the other landmine: both signs, in different ways, hate being told what to do, and neither backs down easily once dug in, which can turn small disagreements into standoffs neither wants.","real_test":"The test here is about tempo, not compatibility of feeling \u2014 both signs genuinely can love each other deeply, the question is whether Aries can learn that Taurus's slowness is not rejection but is actually how Taurus loves, and whether Taurus can learn that Aries's impatience is not carelessness but is how Aries expresses excitement. If Aries can slow its footsteps just enough for Taurus to catch up, and Taurus can occasionally leap without needing every guarantee first, this pairing builds something with real staying power \u2014 heat that Taurus's steadiness keeps from ever fully burning out, and stability that Aries's fire keeps from ever going stale."},"Taurus|Taurus":{"opening":"Two people who love the exact same way, at the exact same speed, which is either the most restful relationship in the zodiac or the slowest-moving one. Taurus Venus loves through consistency, physical affection, good food, and comfort \u2014 it wants a partner who isn't going anywhere and isn't asking for anything performative. Two of them together skip the entire negotiation over pacing that plagues most pairings, because neither one is in a hurry for anything.","clicks":"This is one of the most naturally comfortable Venus pairings there is. Both partners value the same things: reliability, sensual pleasure, a well-kept home, financial security, physical touch. Nobody has to explain why they need routine, or defend wanting to stay in instead of going out, or justify taking things slow. There's a shared appreciation for the good things in life \u2014 a nice meal, a comfortable bed, quality over quantity in everything \u2014 that makes daily life together feel indulgent rather than mundane. Trust builds early because neither partner is inclined toward games or sudden shifts.","strains":"The risk with two Taurus Venuses is stagnation, not conflict. Both partners are so comfortable with the status quo that neither one pushes the relationship to grow, try new things, or leave the routine that's become safe. Stubbornness compounds this \u2014 when disagreements do happen, over money, over change, over who's being more inflexible, neither partner backs down easily, and standoffs can last a genuinely long time because giving in doesn't come naturally to this sign. There's also a risk of possessiveness on both sides; Taurus Venus can be quietly jealous, and two of them together can create a relationship that's secure but a little insular.","real_test":"The test isn't whether these two can build a stable life together \u2014 they will, almost automatically. The test is whether they can resist the gravitational pull toward total sameness, toward never being surprised, toward mistaking comfort for the whole relationship. Taurus Venus needs to occasionally be pulled out of its own routine to stay alive to the relationship rather than just familiar with it, and with two Taurus partners, neither one naturally provides that push. If both partners can consciously introduce small moments of novelty \u2014 a new place, a spontaneous decision, an actual difficult conversation instead of comfortable silence \u2014 this becomes one of the most enduring pairings in the zodiac. If neither does, it's stable, warm, and very slowly loses its pulse."},"Cancer|Capricorn":{"opening":"One loves by nurturing, the other loves by providing. Cancer Venus shows affection through emotional presence, caretaking, and creating a soft place to land \u2014 it wants to feel close, to check in, to be let all the way inside someone's inner world. Capricorn Venus shows affection through commitment, reliability, and building something that lasts \u2014 it wants to prove love through action, not through words, and often distrusts declarations that aren't backed up by follow-through. On paper, these are two people who both take love seriously and don't do casual. Neither is interested in something that doesn't go somewhere, and that shared seriousness is the foundation everything else gets built on.","clicks":"Both signs are slow to trust and deeply loyal once they commit. Cancer's warmth softens Capricorn's guardedness \u2014 gives it permission to be tender in a way it doesn't often allow itself. Capricorn's steadiness gives Cancer the security it's always quietly looking for, the sense that the ground isn't going to shift under it. Neither one is going anywhere once they're in. This pairing tends to build real, durable structures together \u2014 a home, a family, a long financial and emotional life \u2014 rather than short flings or dramatic on-again-off-again cycles. There's an old-soul quality to it; it can feel less like dating and more like building a life alongside someone from very early on.","strains":"Cancer wants emotional expression \u2014 check-ins, reassurance, physical affection, being asked how it's actually doing. Capricorn shows love through action (paying the bills, showing up on time, solving the problem quietly before anyone even noticed it) and can read Cancer's need for verbal reassurance as excessive, or even a little exhausting on a hard week. Cancer, in turn, can experience Capricorn's practicality as cold or withholding, even when Capricorn is fully committed underneath it and would be devastated to lose the relationship. The core conflict is a translation problem, not a caring problem: Cancer feels loved through words and presence, Capricorn feels loved through reliability and results, and each can quietly misread the other's love language as an absence of love rather than just a different dialect of it.","real_test":"This pairing lives or dies on whether both people learn to translate, not just tolerate. Capricorn has to learn that saying the feeling out loud \u2014 even once, even awkwardly \u2014 lands harder with Cancer than another grand gesture of competence ever will; silence, to Cancer, reads as distance even when Capricorn means it as strength. Cancer has to learn to actually see Capricorn's steadiness as the love language it is, instead of waiting for a version of affection that looks more like its own. The danger moment is usually a stretch of stress, when Capricorn goes quiet and heads-down exactly when Cancer needs reassurance most, and Cancer reaches for more closeness exactly when Capricorn wants space to just handle it. If both partners recognize that pattern for what it is rather than taking it personally, this becomes one of the most genuinely durable Venus pairings there is \u2014 two people who fight to stay rather than fight to leave."},"Gemini|Sagittarius":{"opening":"Opposite signs, same appetite for freedom. Gemini Venus loves through conversation, variety, and mental play \u2014 it needs a partner who can keep up in a debate, follow a tangent, and never bore it with routine. Sagittarius Venus loves through adventure, honesty, and expansion \u2014 it needs a partner who won't clip its wings or demand it stay in one place, physically or philosophically, for too long. Neither one is looking for a cage, and neither one is likely to build one, which is exactly what makes this pairing feel so easy at first.","clicks":"This is one of the most naturally fun Venus pairings there is. Both partners are curious, quick, and allergic to boredom, so conversation never runs dry and neither one has to perform enthusiasm they don't feel. Gemini brings wit and range; Sagittarius brings big-picture optimism and a taste for the unknown. Neither one is possessive or clingy by nature, so the relationship tends to feel light rather than heavy, full of shared jokes, spontaneous plans, and a mutual understanding that love doesn't have to mean constant togetherness to be real. Trust is built through honesty rather than reassurance, which suits both of them fine.","strains":"The very freedom that makes this pairing fun can also make it hard to pin down. Both signs can struggle with commitment, not because they don't feel deeply, but because neither one naturally slows down long enough to build the deeper layers a relationship eventually needs. Gemini can flit toward the next interesting conversation, Sagittarius toward the next literal or metaphorical trip, and if neither one is anchoring the relationship, it can stay pleasant and surface-level indefinitely. Sagittarius's bluntness can also land harder on Gemini than intended \u2014 Gemini processes through talking things through, while Sagittarius sometimes says the blunt true thing and considers the matter closed.","real_test":"The real test is whether this pairing can choose depth without feeling like it's choosing a cage. Neither partner responds well to guilt, obligation, or pressure to \"get serious,\" so the relationship has to grow through genuine desire rather than convention \u2014 which is possible, but requires both people to actually want to build something, not just enjoy the ride. Gemini has to resist treating hard conversations like just another topic to move past quickly, and Sagittarius has to resist treating commitment like a loss of freedom rather than a choice it's making, again, every day. If both partners can find a version of depth that still feels like air rather than weight, this becomes a relationship that's rare in the zodiac: genuinely fun for the long haul, not just the beginning."},"Cancer|Gemini":{"opening":"One loves by feeling, the other loves by talking. Cancer Venus shows affection through emotional depth, memory, and closeness \u2014 it wants to hold hands with someone's inner world, to be trusted with the soft parts, to build a private universe of in-jokes and rituals over time. Gemini Venus shows affection through curiosity, banter, and movement \u2014 it wants a partner who's endlessly interesting to talk to, who doesn't need every feeling spelled out, who can ride the current of a conversation wherever it goes. These two are speaking different love dialects from day one, and whether that becomes charming or exhausting depends entirely on how much either one is willing to learn the other's language.","clicks":"Gemini brings lightness Cancer doesn't always give itself permission to have \u2014 a way of turning a heavy day into a joke, of keeping things playful when Cancer would otherwise sink into its own feelings. Cancer brings a kind of emotional attentiveness Gemini rarely receives \u2014 someone who actually remembers what was said three weeks ago, who notices the mood shift before it's spoken. There's real charm here: Gemini's wit paired with Cancer's warmth can make for a relationship that's both fun and tender, chatty dinners that turn into real conversations, a partner who makes Cancer laugh and a partner who makes Gemini feel actually known rather than just entertaining.","strains":"Cancer needs consistency and emotional check-ins; Gemini needs variety and mental freedom, and can feel boxed in by too much processing or too many questions about \"where this is going.\" When Cancer reaches for reassurance, Gemini's instinct to lighten the mood or change the subject can land as dismissive, even when it's not meant that way. Meanwhile Gemini's natural sociability and need for space can trigger Cancer's deeper fear of being unimportant or easily replaced \u2014 Cancer notices distance and reads it as withdrawal of love, when for Gemini it's often just normal breathing room. Neither one is wrong about what they need; the problem is each one's normal is the other's warning sign.","real_test":"This pairing works if Gemini learns that Cancer's need for reassurance isn't clinginess, it's Cancer's actual love language, and a few consistent words of care go further here than any clever joke. And it works if Cancer learns that Gemini's need for lightness and space isn't evidence of lesser feeling, just a different rhythm of closeness \u2014 Gemini can be deeply loyal while still needing room to roam mentally and socially. The danger moment is a stretch where Cancer spirals into needing more closeness right as Gemini pulls back for air, each move confirming the other's worst fear. If both partners can catch that pattern and name it instead of react to it, this becomes a relationship with real range \u2014 deep enough to matter, light enough to never go stale."}};
+
+// build starfield
+(function(){
+  const starsEl = document.getElementById('stars');
+  const count = 200;
+  for(let i=0;i<count;i++){
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random()*2.2 + 0.6;
+    s.style.width = size+'px';
+    s.style.height = size+'px';
+    s.style.left = Math.random()*100+'vw';
+    s.style.top = Math.random()*100+'vh';
+    s.style.animationDelay = (Math.random()*5)+'s';
+    s.style.animationDuration = (2+Math.random()*3.5)+'s';
+    starsEl.appendChild(s);
+  }
+
+  function spawnComet(){
+    const c = document.createElement('div');
+    c.className = 'comet';
+    const startX = Math.random()*100;
+    const startY = Math.random()*40;
+    const angle = 25 + Math.random()*20;
+    const dist = 900 + Math.random()*400;
+    const rad = angle * Math.PI/180;
+    const dx = Math.cos(rad)*dist;
+    const dy = Math.sin(rad)*dist;
+    c.style.left = startX+'vw';
+    c.style.top = startY+'vh';
+    c.style.setProperty('--dx', dx+'px');
+    c.style.setProperty('--dy', dy+'px');
+    const dur = 1.8 + Math.random()*1.2;
+    c.style.animationDuration = dur+'s';
+    c.style.transform = 'rotate('+angle+'deg)';
+    starsEl.appendChild(c);
+    setTimeout(()=>c.remove(), dur*1000 + 200);
+  }
+
+  function scheduleComet(){
+    const delay = 4000 + Math.random()*7000;
+    setTimeout(()=>{ spawnComet(); scheduleComet(); }, delay);
+  }
+  scheduleComet();
+})();
+
+function venusSignForDate(dateStr){
+  // dateStr: 'YYYY-MM-DD'
+  let result = null;
+  for(const t of VENUS_TRANSITIONS){
+    if(t.date <= dateStr){ result = t.sign; } else { break; }
+  }
+  return result;
+}
+
+function pairKey(signA, signB){
+  const order = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
+  const a = order.indexOf(signA), b = order.indexOf(signB);
+  return a <= b ? signA+"|"+signB : signB+"|"+signA;
+}
+
+function validate(){
+  const p1name = document.getElementById('p1name').value.trim();
+  const p2name = document.getElementById('p2name').value.trim();
+  const p1date = document.getElementById('p1date').value;
+  const p2date = document.getElementById('p2date').value;
+  const errorEl = document.getElementById('errorMsg');
+  errorEl.textContent = '';
+
+  if(!p1name || !p2name){
+    errorEl.textContent = 'Both names are needed — even just an initial works.';
+    return null;
+  }
+  if(!p1date || !p2date){
+    errorEl.textContent = 'Both dates of birth are needed to find Venus.';
+    return null;
+  }
+  return {p1name,p2name,p1date,p2date};
+}
+
+function runMatch(){
+  const data = validate();
+  if(!data) return;
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.classList.add('spin-active');
+
+  setTimeout(()=>{
+    showResults(data);
+    btn.classList.remove('spin-active');
+    btn.disabled = false;
+  }, 2200);
+}
+
+function showResults(data){
+  const p1venus = venusSignForDate(data.p1date);
+  const p2venus = venusSignForDate(data.p2date);
+  const p1place = document.getElementById('p1place').value.trim();
+  const p2place = document.getElementById('p2place').value.trim();
+  const p1timeUnknown = document.getElementById('p1timeunknown').checked;
+  const p2timeUnknown = document.getElementById('p2timeunknown').checked;
+
+  document.getElementById('resultNames').innerHTML =
+    data.p1name + ' <span>&amp;</span> ' + data.p2name;
+
+  document.getElementById('recap1who').textContent = data.p1name;
+  document.getElementById('recap1venus').textContent = 'Venus in ' + p1venus;
+  document.getElementById('recap1meta').innerHTML =
+    formatDate(data.p1date) + (p1timeUnknown? ' &middot; time unknown':'') + (p1place? '<br>'+escapeHtml(p1place):'');
+
+  document.getElementById('recap2who').textContent = data.p2name;
+  document.getElementById('recap2venus').textContent = 'Venus in ' + p2venus;
+  document.getElementById('recap2meta').innerHTML =
+    formatDate(data.p2date) + (p2timeUnknown? ' &middot; time unknown':'') + (p2place? '<br>'+escapeHtml(p2place):'');
+
+  document.getElementById('venusBanner').innerHTML =
+    data.p1name + '\'s Venus in <b>'+p1venus+'</b> meets '+data.p2name+'\'s Venus in <b>'+p2venus+'</b>';
+
+  const key = pairKey(p1venus, p2venus);
+  const entry = COMPAT_DATA[key];
+  const contentEl = document.getElementById('compatContent');
+  const missingEl = document.getElementById('missingNote');
+
+  if(entry){
+    contentEl.style.display = 'block';
+    missingEl.style.display = 'none';
+    contentEl.innerHTML = `
+      <div class="section"><p>${entry.opening}</p></div>
+      <div class="section"><h3>Where it clicks</h3><p>${entry.clicks}</p></div>
+      <div class="section"><h3>Where it strains</h3><p>${entry.strains}</p></div>
+      <div class="section"><h3>The real test</h3><p>${entry.real_test}</p></div>
+    `;
+  } else {
+    contentEl.style.display = 'none';
+    missingEl.style.display = 'block';
+    missingEl.textContent = 'The full write-up for ' + p1venus + ' + ' + p2venus + ' is still being written \u2014 check back soon.';
+  }
+
+  document.getElementById('formView').style.display = 'none';
+  document.getElementById('resultsView').style.display = 'block';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function goBack(){
+  document.getElementById('resultsView').style.display = 'none';
+  document.getElementById('formView').style.display = 'block';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function formatDate(dateStr){
+  const d = new Date(dateStr+'T00:00:00');
+  return d.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+}
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>
