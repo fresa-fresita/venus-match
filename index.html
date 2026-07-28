@@ -139,11 +139,10 @@ h1{
 
 .stage{
   position:relative;
-  margin-top:auto;
-  margin-bottom:auto;
+  margin-top:48px;
   flex:1;
   display:flex;
-  align-items:center;
+  align-items:flex-start;
 }
 
 .people{
@@ -694,6 +693,27 @@ function showResults(data){
 }
 
 function goBack(){
+  // clear text/place inputs
+  ['p1name','p2name','p1place','p2place'].forEach(id=>{
+    document.getElementById(id).value = '';
+  });
+  // clear dates
+  ['p1date','p2date'].forEach(id=>{
+    document.getElementById(id).value = '';
+  });
+  // reset time selects to first option
+  ['p1hour','p2hour','p1min','p2min'].forEach(id=>{
+    document.getElementById(id).selectedIndex = 0;
+  });
+  ['p1ampm','p2ampm'].forEach(id=>{
+    document.getElementById(id).value = 'AM';
+  });
+  // uncheck "don't know time" boxes
+  ['p1timeunknown','p2timeunknown'].forEach(id=>{
+    document.getElementById(id).checked = false;
+  });
+  document.getElementById('errorMsg').textContent = '';
+
   document.getElementById('resultsView').style.display = 'none';
   document.getElementById('formView').style.display = 'block';
   window.scrollTo({top:0,behavior:'smooth'});
