@@ -26,31 +26,86 @@ html,body{
   overflow-x:hidden;
 }
 #stars{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
-.star{position:absolute;background:#fff;border-radius:50%;animation:twinkle ease-in-out infinite;}
-@keyframes twinkle{0%,100%{opacity:0.1;}50%{opacity:1;}}
 
-.comet{
-  position:absolute;
-  width:2px;height:2px;
-  background:#fff;
-  border-radius:50%;
-  box-shadow:0 0 0 1px rgba(255,255,255,0.1);
-  animation:comet-fly linear forwards;
+#milkyway{
+  position:fixed;inset:-20%;z-index:0;pointer-events:none;overflow:hidden;
 }
-.comet::before{
+#milkyway::before{
   content:'';
   position:absolute;
   top:50%;left:50%;
-  width:140px;height:1.5px;
-  background:linear-gradient(90deg,rgba(255,255,255,0.9),rgba(255,255,255,0) 100%);
-  transform:translate(-100%,-50%) rotate(180deg);
-  transform-origin:right center;
+  width:180vmax;height:38vmax;
+  transform:translate(-50%,-50%) rotate(-22deg);
+  background:linear-gradient(90deg,
+    rgba(180,170,220,0) 0%,
+    rgba(190,180,230,0.05) 12%,
+    rgba(210,195,235,0.09) 30%,
+    rgba(225,210,240,0.11) 50%,
+    rgba(210,195,235,0.09) 70%,
+    rgba(190,180,230,0.05) 88%,
+    rgba(180,170,220,0) 100%
+  );
+  filter:blur(18px);
+  opacity:0.5;
+}
+#milkyway::after{
+  content:'';
+  position:absolute;
+  top:50%;left:50%;
+  width:170vmax;height:16vmax;
+  transform:translate(-50%,-50%) rotate(-22deg);
+  background:linear-gradient(90deg,
+    rgba(232,184,96,0) 0%,
+    rgba(232,184,96,0.04) 20%,
+    rgba(214,143,163,0.06) 50%,
+    rgba(232,184,96,0.04) 80%,
+    rgba(232,184,96,0) 100%
+  );
+  filter:blur(30px);
+  opacity:0.6;
+}
+.star{
+  position:absolute;background:#fff;border-radius:50%;
+  animation:twinkle ease-in-out infinite;
+  box-shadow:0 0 4px 1px rgba(255,255,255,0.6);
+}
+.star-close{
+  box-shadow:0 0 10px 3px rgba(255,255,255,0.75), 0 0 18px 6px rgba(232,184,96,0.25);
+}
+@keyframes twinkle{
+  0%,100%{opacity:0.2;}
+  50%{opacity:1;}
+}
+
+.comet{
+  position:relative;
+  width:4px;height:4px;
+  background:#fff;
+  image-rendering:pixelated;
+  box-shadow:
+    -4px 0 0 0 #fff,
+    -8px 0 0 0 #e8e6f5,
+    -12px 0 0 0 #c7c4dd,
+    -16px 0 0 0 #9a97b8,
+    -20px 0 0 0 #6d6a8f,
+    0 0 8px 2px rgba(255,255,255,0.8);
+  animation:comet-fly linear forwards;
 }
 @keyframes comet-fly{
+  0%{transform:translateX(0);opacity:0;}
+  8%{opacity:1;}
+  85%{opacity:1;}
+  100%{transform:translateX(var(--dist));opacity:0;}
+}
+
+@keyframes ufo-fly{
   0%{transform:translate(0,0);opacity:0;}
   6%{opacity:1;}
-  85%{opacity:1;}
-  100%{transform:translate(var(--dx),var(--dy));opacity:0;}
+  25%{transform:translate(28vw,-2vh);}
+  50%{transform:translate(56vw,2vh);}
+  75%{transform:translate(84vw,-1.5vh);}
+  94%{opacity:1;}
+  100%{transform:translate(115vw,0);opacity:0;}
 }
 
 .wrap{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:40px 24px 60px;min-height:100vh;display:flex;flex-direction:column;}
@@ -143,6 +198,26 @@ h1{
   font-size:11.5px;color:var(--text-dim);
 }
 .time-unknown input{width:auto;}
+
+.time-row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.time-select{
+  background:var(--bg-card-2);
+  border:0.5px solid var(--line);
+  border-radius:8px;
+  padding:9px 8px;
+  color:var(--text-main);
+  font-family:'Inter',sans-serif;
+  font-size:13.5px;
+  flex:1;
+  min-width:0;
+}
+.time-select:focus{outline:none;border-color:var(--gold);}
+.time-ampm{flex:1.1;}
+.time-colon{color:var(--text-dim);font-size:14px;}
 
 .orbit-zone{
   display:flex;
@@ -260,19 +335,20 @@ h1{
 <body>
 
 <div id="stars"></div>
+<div id="milkyway"></div>
 
 <div class="wrap">
   <h1>Venus Match</h1>
-  <p class="subtitle">Everyone talks about sun signs. Nobody talks about Venus — and Venus is the one that actually tells you how two people love.</p>
+  <p class="subtitle">Everyone talks about Sun signs. Nobody talks about Venus — and Venus is the one that actually tells you how two people love.</p>
   <p class="privacy-note">Nothing you enter is stored or sent anywhere. Everything is calculated right here, in your browser.</p>
 
   <div id="formView" class="stage">
     <div class="people">
       <div class="person-card">
-        <h2 id="p1Label">Person one</h2>
+        <h2 id="p1Label">You</h2>
         <div class="field">
           <label>Name (first name or nickname is fine)</label>
-          <input type="text" id="p1name" placeholder="Anna" maxlength="40">
+          <input type="text" id="p1name" placeholder="First name or nickname" maxlength="40">
         </div>
         <div class="field">
           <label>Date of birth</label>
@@ -280,7 +356,15 @@ h1{
         </div>
         <div class="field">
           <label>Time of birth</label>
-          <input type="time" id="p1time">
+          <div class="time-row">
+            <select id="p1hour" class="time-select"></select>
+            <span class="time-colon">:</span>
+            <select id="p1min" class="time-select"></select>
+            <select id="p1ampm" class="time-select time-ampm">
+              <option value="AM">AM</option>
+              <option value="PM">PM</option>
+            </select>
+          </div>
           <div class="time-unknown">
             <input type="checkbox" id="p1timeunknown">
             <label for="p1timeunknown" style="margin:0;text-transform:none;letter-spacing:normal;">I don't know the exact time</label>
@@ -288,7 +372,7 @@ h1{
         </div>
         <div class="field">
           <label>Place of birth</label>
-          <input type="text" id="p1place" placeholder="Chicago, USA">
+          <input type="text" id="p1place" placeholder="City, Country">
         </div>
       </div>
 
@@ -315,10 +399,10 @@ h1{
       </div>
 
       <div class="person-card">
-        <h2 id="p2Label">Person two</h2>
+        <h2 id="p2Label">Them</h2>
         <div class="field">
           <label>Name (first name or nickname is fine)</label>
-          <input type="text" id="p2name" placeholder="Jess" maxlength="40">
+          <input type="text" id="p2name" placeholder="First name or nickname" maxlength="40">
         </div>
         <div class="field">
           <label>Date of birth</label>
@@ -326,7 +410,15 @@ h1{
         </div>
         <div class="field">
           <label>Time of birth</label>
-          <input type="time" id="p2time">
+          <div class="time-row">
+            <select id="p2hour" class="time-select"></select>
+            <span class="time-colon">:</span>
+            <select id="p2min" class="time-select"></select>
+            <select id="p2ampm" class="time-select time-ampm">
+              <option value="AM">AM</option>
+              <option value="PM">PM</option>
+            </select>
+          </div>
           <div class="time-unknown">
             <input type="checkbox" id="p2timeunknown">
             <label for="p2timeunknown" style="margin:0;text-transform:none;letter-spacing:normal;">I don't know the exact time</label>
@@ -334,7 +426,7 @@ h1{
         </div>
         <div class="field">
           <label>Place of birth</label>
-          <input type="text" id="p2place" placeholder="Dnipro, Ukraine">
+          <input type="text" id="p2place" placeholder="City, Country">
         </div>
       </div>
     </div>
@@ -374,39 +466,63 @@ const COMPAT_DATA = {"Aries|Aries":{"opening":"Two people who love the same way:
 // build starfield
 (function(){
   const starsEl = document.getElementById('stars');
+
   const count = 200;
   for(let i=0;i<count;i++){
     const s = document.createElement('div');
     s.className = 'star';
-    const size = Math.random()*2.2 + 0.6;
+    const size = Math.random()*1.6 + 0.5;
     s.style.width = size+'px';
     s.style.height = size+'px';
     s.style.left = Math.random()*100+'vw';
     s.style.top = Math.random()*100+'vh';
     s.style.animationDelay = (Math.random()*5)+'s';
-    s.style.animationDuration = (2+Math.random()*3.5)+'s';
+    s.style.animationDuration = (6+Math.random()*8)+'s';
+    starsEl.appendChild(s);
+  }
+
+  // a few larger, closer-looking dots
+  const bigCount = 4;
+  for(let i=0;i<bigCount;i++){
+    const s = document.createElement('div');
+    s.className = 'star star-close';
+    const size = Math.random()*1.8 + 3.2;
+    s.style.width = size+'px';
+    s.style.height = size+'px';
+    s.style.left = Math.random()*100+'vw';
+    s.style.top = Math.random()*100+'vh';
+    s.style.animationDelay = (Math.random()*5)+'s';
+    s.style.animationDuration = (7+Math.random()*7)+'s';
     starsEl.appendChild(s);
   }
 
   function spawnComet(){
+    const wrap = document.createElement('div');
+    wrap.style.position = 'absolute';
+
+    // Always travel true corner to opposite corner, picking one of two diagonals at random
+    const topLeftToBottomRight = Math.random() < 0.5;
+    const startX = topLeftToBottomRight ? -5 : 105;
+    const startY = -5;
+    const angle = topLeftToBottomRight ? 45 : 135; // degrees: 45 = down-right, 135 = down-left
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const dist = Math.sqrt(vw*vw + vh*vh) * 1.15; // straight-line travel distance along the rotated axis, covers full diagonal
+
+    wrap.style.left = startX+'vw';
+    wrap.style.top = startY+'vh';
+    wrap.style.transform = 'rotate('+angle+'deg)';
+
     const c = document.createElement('div');
     c.className = 'comet';
-    const startX = Math.random()*100;
-    const startY = Math.random()*40;
-    const angle = 25 + Math.random()*20;
-    const dist = 900 + Math.random()*400;
-    const rad = angle * Math.PI/180;
-    const dx = Math.cos(rad)*dist;
-    const dy = Math.sin(rad)*dist;
-    c.style.left = startX+'vw';
-    c.style.top = startY+'vh';
-    c.style.setProperty('--dx', dx+'px');
-    c.style.setProperty('--dy', dy+'px');
-    const dur = 1.8 + Math.random()*1.2;
+    c.style.setProperty('--dist', dist+'px');
+    const dur = 2.4 + Math.random()*1.0;
     c.style.animationDuration = dur+'s';
-    c.style.transform = 'rotate('+angle+'deg)';
-    starsEl.appendChild(c);
-    setTimeout(()=>c.remove(), dur*1000 + 200);
+
+    wrap.appendChild(c);
+    starsEl.appendChild(wrap);
+    setTimeout(()=>wrap.remove(), dur*1000 + 200);
   }
 
   function scheduleComet(){
@@ -414,6 +530,47 @@ const COMPAT_DATA = {"Aries|Aries":{"opening":"Two people who love the same way:
     setTimeout(()=>{ spawnComet(); scheduleComet(); }, delay);
   }
   scheduleComet();
+
+  function spawnUFO(){
+    const leftToRight = Math.random() < 0.5;
+    const y = 8 + Math.random()*55; // vertical position, upper-to-mid screen
+    const w = 74;
+
+    const wrap = document.createElement('div');
+    wrap.style.position = 'absolute';
+    wrap.style.top = y+'vh';
+    wrap.style.left = leftToRight ? '-100px' : '';
+    wrap.style.right = leftToRight ? '' : '-100px';
+    wrap.style.width = w+'px';
+    wrap.style.zIndex = '1';
+    wrap.style.animation = 'ufo-fly '+(leftToRight?'normal':'reverse')+' 9s linear';
+
+    const inner = document.createElement('div');
+    if(!leftToRight){ inner.style.transform = 'scaleX(-1)'; }
+
+    inner.innerHTML = `<svg viewBox="0 0 74 40" width="74" height="40" style="display:block;overflow:visible;filter:drop-shadow(0 0 6px rgba(255,255,255,0.55)) drop-shadow(0 0 12px rgba(255,255,255,0.3));">
+      <ellipse cx="37" cy="16" rx="13" ry="10" fill="#fff" opacity="0.75"/>
+      <ellipse cx="37" cy="16" rx="13" ry="10" fill="none" stroke="#080a1c" stroke-width="1" opacity="0.4"/>
+      <ellipse cx="37" cy="24" rx="34" ry="7" fill="#fff" opacity="0.8"/>
+      <ellipse cx="37" cy="24" rx="34" ry="7" fill="none" stroke="#080a1c" stroke-width="1" opacity="0.4"/>
+      <circle cx="20" cy="24" r="2" fill="#080a1c" opacity="0.45"/>
+      <circle cx="30" cy="26" r="2" fill="#080a1c" opacity="0.45"/>
+      <circle cx="44" cy="26" r="2" fill="#080a1c" opacity="0.45"/>
+      <circle cx="54" cy="24" r="2" fill="#080a1c" opacity="0.45"/>
+      <polygon points="24,29 50,29 40,44 34,44" fill="#fff" opacity="0.14"/>
+    </svg>`;
+
+    wrap.appendChild(inner);
+
+    starsEl.appendChild(wrap);
+    setTimeout(()=>wrap.remove(), 9200);
+  }
+
+  function scheduleUFO(){
+    const delay = 55000 + Math.random()*10000; // roughly once a minute
+    setTimeout(()=>{ spawnUFO(); scheduleUFO(); }, delay);
+  }
+  scheduleUFO();
 })();
 
 function venusSignForDate(dateStr){
@@ -424,6 +581,26 @@ function venusSignForDate(dateStr){
   }
   return result;
 }
+
+function populateTimeSelects(){
+  ['p1hour','p2hour'].forEach(id=>{
+    const el = document.getElementById(id);
+    for(let h=1; h<=12; h++){
+      const opt = document.createElement('option');
+      opt.value = h; opt.textContent = h;
+      el.appendChild(opt);
+    }
+  });
+  ['p1min','p2min'].forEach(id=>{
+    const el = document.getElementById(id);
+    for(let m=0; m<60; m++){
+      const opt = document.createElement('option');
+      opt.value = m; opt.textContent = String(m).padStart(2,'0');
+      el.appendChild(opt);
+    }
+  });
+}
+populateTimeSelects();
 
 function pairKey(signA, signB){
   const order = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
@@ -472,6 +649,8 @@ function showResults(data){
   const p2place = document.getElementById('p2place').value.trim();
   const p1timeUnknown = document.getElementById('p1timeunknown').checked;
   const p2timeUnknown = document.getElementById('p2timeunknown').checked;
+  const p1timeStr = p1timeUnknown ? '' : (document.getElementById('p1hour').value+':'+String(document.getElementById('p1min').value).padStart(2,'0')+' '+document.getElementById('p1ampm').value);
+  const p2timeStr = p2timeUnknown ? '' : (document.getElementById('p2hour').value+':'+String(document.getElementById('p2min').value).padStart(2,'0')+' '+document.getElementById('p2ampm').value);
 
   document.getElementById('resultNames').innerHTML =
     data.p1name + ' <span>&amp;</span> ' + data.p2name;
@@ -479,12 +658,12 @@ function showResults(data){
   document.getElementById('recap1who').textContent = data.p1name;
   document.getElementById('recap1venus').textContent = 'Venus in ' + p1venus;
   document.getElementById('recap1meta').innerHTML =
-    formatDate(data.p1date) + (p1timeUnknown? ' &middot; time unknown':'') + (p1place? '<br>'+escapeHtml(p1place):'');
+    formatDate(data.p1date) + (p1timeUnknown? ' &middot; time unknown' : (p1timeStr? ' &middot; '+p1timeStr:'')) + (p1place? '<br>'+escapeHtml(p1place):'');
 
   document.getElementById('recap2who').textContent = data.p2name;
   document.getElementById('recap2venus').textContent = 'Venus in ' + p2venus;
   document.getElementById('recap2meta').innerHTML =
-    formatDate(data.p2date) + (p2timeUnknown? ' &middot; time unknown':'') + (p2place? '<br>'+escapeHtml(p2place):'');
+    formatDate(data.p2date) + (p2timeUnknown? ' &middot; time unknown' : (p2timeStr? ' &middot; '+p2timeStr:'')) + (p2place? '<br>'+escapeHtml(p2place):'');
 
   document.getElementById('venusBanner').innerHTML =
     data.p1name + '\'s Venus in <b>'+p1venus+'</b> meets '+data.p2name+'\'s Venus in <b>'+p2venus+'</b>';
